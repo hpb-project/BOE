@@ -89,56 +89,55 @@ assign tx_ifg_delay     = 8'h00;
 assign signal_detect    = 1'b1;
 
 
-network_module network_inst
+niu_single niu_single_inst
 (
-.clk156 (clk156_25),
-.reset(reset),
-.aresetn(aresetn),
-.dclk                             (dclk_i),
-.txusrclk                         (gt_txusrclk),
-.txusrclk2                        (gt_txusrclk2),
-.txclk322                         (gt_txclk322),
+.clk156             (clk156_25),
+.reset              (reset),
+.aresetn            (aresetn),
+.dclk               (dclk_i),
+.txusrclk           (gt_txusrclk),
+.txusrclk2          (gt_txusrclk2),
+.txclk322           (gt_txclk322),
 
-.areset_refclk_bufh               (areset_clk_156_25_bufh),
-.areset_clk156                    (areset_clk_156_25),
-.mmcm_locked_clk156               (mmcm_locked_clk156),
-.gttxreset_txusrclk2              (gttxreset_txusrclk2),
-.gttxreset                        (gttxreset),
-.gtrxreset                        (gtrxreset),
-.txuserrdy                        (gt_txuserrdy),
-.qplllock                         (gt_qplllock),
-.qplloutclk                       (gt_qplloutclk),
-.qplloutrefclk                    (gt_qplloutrefclk),
-.reset_counter_done               (reset_counter_done),
-.tx_resetdone                     (gt_tx_resetdone),
+.areset_refclk_bufh (areset_clk_156_25_bufh),
+.areset_clk156      (areset_clk_156_25),
+.mmcm_locked_clk156 (mmcm_locked_clk156),
+.gttxreset_txusrclk2(gttxreset_txusrclk2),
+.gttxreset          (gttxreset),
+.gtrxreset          (gtrxreset),
+.txuserrdy          (gt_txuserrdy),
+.qplllock           (gt_qplllock),
+.qplloutclk         (gt_qplloutclk),
+.qplloutrefclk      (gt_qplloutrefclk),
+.reset_counter_done (reset_counter_done),
+.tx_resetdone       (gt_tx_resetdone),
 
 .txp(xge_txp),
 .txn(xge_txn),
 .rxp(xge_rxp),
 .rxn(xge_rxn),
 
-.tx_axis_tdata(tx_axis_tdata),
+.tx_axis_tdata (tx_axis_tdata),
 .tx_axis_tvalid(tx_axis_tvalid),
-.tx_axis_tlast(tx_axis_tlast),
-.tx_axis_tuser(1'b0),
-.tx_axis_tkeep(tx_axis_tkeep),
+.tx_axis_tlast (tx_axis_tlast),
+.tx_axis_tuser (1'b0),
+.tx_axis_tkeep (tx_axis_tkeep),
 .tx_axis_tready(tx_axis_tready),
 
-.rx_axis_tdata(rx_axis_tdata),
+.rx_axis_tdata (rx_axis_tdata),
 .rx_axis_tvalid(rx_axis_tvalid),
-.rx_axis_tuser(rx_axis_tuser),
-.rx_axis_tlast(rx_axis_tlast),
-.rx_axis_tkeep(rx_axis_tkeep),
+.rx_axis_tuser (rx_axis_tuser),
+.rx_axis_tlast (rx_axis_tlast),
+.rx_axis_tkeep (rx_axis_tkeep),
 .rx_axis_tready(rx_axis_tready),
 
-
-.core_reset(core_reset),
-.tx_fault(tx_fault),
+.core_reset   (core_reset),
+.tx_fault     (tx_fault),
 .signal_detect(signal_detect),
-.tx_ifg_delay(tx_ifg_delay),
-.tx_disable(),
-.core_status(core_status)
-);
+.tx_ifg_delay (tx_ifg_delay),
+.tx_disable   (),
+.core_status  (core_status)
+); 
 
 
 IBUFDS_GTE2 xgphy_refclk_ibuf (
@@ -148,7 +147,6 @@ IBUFDS_GTE2 xgphy_refclk_ibuf (
     .O      (xge_refclk_i  ),
     .CEB    (1'b0          ),
     .ODIV2  (              )   
-
 );
 
 
@@ -185,7 +183,7 @@ xgbaser_gt_same_quad_wrapper #(
     
 
 
-//---------------------------  Debug      ----------------------------
+//---------------------------     Debug      ----------------------------
 localparam  LED_CTR_WIDTH      = 26;
 reg     [LED_CTR_WIDTH-1:0]    l1_ctr;
 
