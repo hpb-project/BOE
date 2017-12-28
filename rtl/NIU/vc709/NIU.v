@@ -49,7 +49,12 @@ module NIU(
     output            clk156_out,
     output            network_reset_done,
  
-    output  [7:0]     led 
+    output  [7:0]     led ,
+    
+    input             mac_id_filter_en,
+    input             mac_id_valid,
+    input  [47:0]     mac_id
+    
 );
 
 
@@ -136,7 +141,11 @@ niu_single niu_single_inst
 .signal_detect(signal_detect),
 .tx_ifg_delay (tx_ifg_delay),
 .tx_disable   (),
-.core_status  (core_status)
+.core_status  (core_status),
+.mac_id_filter_en(mac_id_filter_en),
+.mac_id_valid    (mac_id_valid    ),
+.mac_id          (mac_id          )
+
 ); 
 
 

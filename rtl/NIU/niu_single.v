@@ -66,8 +66,12 @@ module niu_single(
     input           signal_detect,
     input[7:0]      tx_ifg_delay,
     output          tx_disable,
-
-    output[7:0]     core_status
+    output[7:0]     core_status,
+    
+    input           mac_id_filter_en,
+    input           mac_id_valid,
+    input  [47:0]   mac_id,
+    
 );
 
 wire[535:0] configuration_vector;
@@ -244,27 +248,27 @@ ten_gig_eth_mac_ip ten_gig_eth_mac_inst
 
 
 niu_rx niu_rx_inst (
-.axis_tdata_from_xgmac   (xgmac2rx_axis_tdata     ),
-.axis_tkeep_from_xgmac   (xgmac2rx_axis_tkeep     ),
-.axis_tvalid_from_xgmac  (xgmac2rx_axis_tvalid    ),
-.axis_tlast_from_xgmac   (xgmac2rx_axis_tlast     ),
-.axis_tuser_from_xgmac   (xgmac2rx_axis_tuser     ),
-//.mac_id                     (48'h000000000000                       ),
-//.mac_id_valid               (1'b0                 ),
-.rx_statistics_vector    (rx_statistics_vector         ),
-.rx_statistics_valid     (rx_statistics_valid          ),
-//.promiscuous_mode_en        (1'b0          ),
-.axis_tready_from_fifo   (rx2slice_axis_tready),
-.axis_tdata_to_fifo      (rx2slice_axis_tdata),
-.axis_tkeep_to_fifo      (rx2slice_axis_tkeep),
-.axis_tvalid_to_fifo     (rx2slice_axis_tvalid),
-.axis_tlast_to_fifo      (rx2slice_axis_tlast),
-.rd_data_count           (          ), //TODO
-.rd_pkt_len              (                   ),
-.rx_fifo_overflow        (             ), //TODO
-.user_clk                (clk156                       ),
-.soft_reset              (reset                   ),
-.reset                   (reset                   )
+.s_axis_tdata            (xgmac2rx_axis_tdata ),
+.s_axis_tkeep            (xgmac2rx_axis_tkeep ),
+.s_axis_tvalid           (xgmac2rx_axis_tvalid),
+.s_axis_tlast            (xgmac2rx_axis_tlast ),
+.s_axis_tuser            (xgmac2rx_axis_tuser ),     
+.mac_id_filter_en        (mac_id_filter_en    ),
+.mac_id                  (mac_id              ),
+.mac_id_valid            (mac_id_valid        ),
+.rx_statistics_vector    (rx_statistics_vector),
+.rx_statistics_valid     (rx_statistics_valid ),
+.m_axis_tready           (rx2slice_axis_tready),
+.m_axis_tdata            (rx2slice_axis_tdata ),
+.m_axis_tkeep            (rx2slice_axis_tkeep ),
+.m_axis_tvalid           (rx2slice_axis_tvalid),
+.m_axis_tlast            (rx2slice_axis_tlast ),
+.rd_data_count           (                    ), //TODO
+.rd_pkt_len              (                    ),
+.rx_fifo_overflow        (                    ), //TODO
+.user_clk                (clk156              ),
+.soft_reset              (reset               ),
+.reset                   (reset               )
 );
 
 axis_pkt_fifo tif(
