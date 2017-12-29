@@ -70,7 +70,7 @@ module niu_single(
     
     input           mac_id_filter_en,
     input           mac_id_valid,
-    input  [47:0]   mac_id,
+    input  [47:0]   mac_id
     
 );
 

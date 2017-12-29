@@ -248,11 +248,11 @@ localparam   THRESHOLD_EXT       = 400;
   //            In this state, tvalid to FIFO is de-asserted
 always @(posedge user_clk)
   begin
-         if(reset)
+         if(reset)begin
                  state_wr   <= IDLE_WR;
                  cmd_in     <='b0;
                  cmd_fifo_wr<=1'b0;
-         else begin
+         end else begin
              case(state_wr)
                   IDLE_WR : begin
                                  cmd_in           <= 'b0;
