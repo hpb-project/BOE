@@ -18,19 +18,11 @@ module pkt_generator();
 		input string pkt_string;
 		
 		pkt = new();
-		pkt.set_ether_by_string(pkt_string);
+		pkt.set_user_define_by_string(pkt_string);
 //		pkt.print_packet();
 		mbx.put(pkt);
 	endtask
 	
-	task send_higig2_pkt;
-		input string pkt_string;
-		
-		pkt = new();
-		pkt.set_higig2_by_string(pkt_string);
-//		pkt.print_packet();
-		mbx.put(pkt);
-	endtask
 endmodule
 
 

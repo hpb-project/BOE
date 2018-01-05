@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps 
-`include "pkg_definitions.sv"
 `include "pkt_tm/pkt_package.sv"
 
 module tb_niu ();
@@ -16,7 +15,6 @@ wire          xge_rxn            ;
 wire[63:0]    rx_axis_tdata      ;
 wire          rx_axis_tvalid     ;
 wire          rx_axis_tlast      ;
-wire          rx_axis_tuser      ;
 wire[7:0]     rx_axis_tkeep      ;
 wire          rx_axis_tready     ;
 wire[63:0]    tx_axis_tdata      ;
@@ -28,9 +26,9 @@ wire          tx_axis_tready     ;
 wire          clk156_out         ;
 wire          network_reset_done ;
 wire[7:0]     led                ;
-wire          mac_id_filter_en   ;
-wire          mac_id_valid       ;
-wire[47:0]    mac_id             ;
+reg           mac_id_filter_en   =  1'b1;               
+reg           mac_id_valid       =  1'b1;               
+reg [47:0]    mac_id             =  48'h112233445566;   
 
 wire  [63:0]  xgmii_txd ;
 wire  [7:0]   xgmii_txc ;
@@ -38,6 +36,9 @@ wire  [63:0]  xgmii_rxd ;
 wire  [7:0]   xgmii_rxc ;
 		
 reg init_done=0;
+reg              sys_rst =0;       
+reg              sys_clk =0 ;       
+
 
 
 NIU dut(
@@ -52,7 +53,6 @@ NIU dut(
 .rx_axis_tdata     (rx_axis_tdata       ),
 .rx_axis_tvalid    (rx_axis_tvalid      ),
 .rx_axis_tlast     (rx_axis_tlast       ),
-.rx_axis_tuser     (rx_axis_tuser       ),
 .rx_axis_tkeep     (rx_axis_tkeep       ),
 .rx_axis_tready    (rx_axis_tready      ),
 .tx_axis_tdata     (tx_axis_tdata       ),
@@ -100,9 +100,6 @@ pkt_generator u_axis_pkt_gen();
 
 
 //--------------------clock && rst---------------------
-reg              sys_rst =0;       
-reg              sys_clk =0 ;       
-
 initial begin
 	#1000;
 	sys_rst=1;
@@ -120,9 +117,6 @@ assign xge_refclk_p = sys_clk;
 assign xge_refclk_n = ~sys_clk;
 assign xge_rxp = 1'b0;
 assign xge_rxn = 1'b1;
-assign mac_id_filter_en =  1'b1;   
-assign mac_id_valid     =  1'b1;   
-assign mac_id           =  48'h112233445566;   
 assign rx_axis_tready = 1'b1;
 assign tx_axis_tdata  = 0 ;
 assign tx_axis_tvalid = 0 ;
@@ -130,8 +124,8 @@ assign tx_axis_tlast  = 0 ;
 assign tx_axis_tuser  = 0 ;
 assign tx_axis_tkeep  = 0 ;
 
-assign dut.niu_single_inst.ten_gig_eth_mac_inst.txd = xgmii_rxd;
-assign dut.niu_single_inst.ten_gig_eth_mac_inst.txc = xgmii_rxc;
+assign dut.niu_single_inst.ten_gig_eth_mac_inst.xgmii_rxd = xgmii_rxd;
+assign dut.niu_single_inst.ten_gig_eth_mac_inst.xgmii_rxc = xgmii_rxc;
 
 //-----------------------init------------------------
 initial begin
@@ -140,7 +134,7 @@ initial begin
     u_xgmii_pkt_generator.set_mbx(mbx);
     u_xgmii_pkt_driver.set_mbx(mbx);
     
-    #3500       ;
+    #10us       ;
 
     init_done=1'b1;
 end

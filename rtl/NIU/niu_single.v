@@ -57,7 +57,6 @@ module niu_single(
     output[63:0]    rx_axis_tdata,
     output          rx_axis_tvalid,
     output          rx_axis_tlast,
-    output          rx_axis_tuser,
     output[7:0]     rx_axis_tkeep,
     input           rx_axis_tready,
     
@@ -81,6 +80,8 @@ wire[63:0] xgmii_txd;
 wire[7:0]  xgmii_txc;
 wire[63:0] xgmii_rxd;
 wire[7:0]  xgmii_rxc;
+wire[63:0] xgmii_rxd_tmp;
+wire[7:0]  xgmii_rxc_tmp;
 reg[63:0]  xgmii_txd_reg;
 reg[7:0]   xgmii_txc_reg;
 reg[63:0]  xgmii_rxd_reg;
@@ -152,6 +153,11 @@ always @(posedge clk156) begin
 end
 
 
+`ifndef SIMULATION
+assign xgmii_rxd = xgmii_rxd_tmp;
+assign xgmii_rxc = xgmii_rxc_tmp;
+`endif
+
 ten_gig_eth_pcs_pma_ip ten_gig_eth_pcs_pma_inst
 (
 .coreclk              (clk156),
@@ -175,8 +181,8 @@ ten_gig_eth_pcs_pma_ip ten_gig_eth_pcs_pma_inst
 .reset_counter_done   (reset_counter_done),
 .xgmii_txd            (xgmii_txd_reg3),
 .xgmii_txc            (xgmii_txc_reg3),
-.xgmii_rxd            (xgmii_rxd),
-.xgmii_rxc            (xgmii_rxc),
+.xgmii_rxd            (xgmii_rxd_tmp),
+.xgmii_rxc            (xgmii_rxc_tmp),
 .txp                  (txp),
 .txn                  (txn),
 .rxp                  (rxp),
@@ -272,21 +278,21 @@ niu_rx niu_rx_inst (
 );
 
 axis_pkt_fifo tif(
-  s_axis_aresetn    (~reset         ),
-  s_axis_aclk       (clk156         ),
-  s_axis_tvalid     (tx_axis_tvalid ),
-  s_axis_tready     (tx_axis_tready ),
-  s_axis_tdata      (tx_axis_tdata  ),
-  s_axis_tkeep      (tx_axis_tkeep  ),
-  s_axis_tlast      (tx_axis_tlast  ),
-  m_axis_tvalid     (tif2xgmac_axis_tvalid),
-  m_axis_tready     (tif2xgmac_axis_tready),
-  m_axis_tdata      (tif2xgmac_axis_tdata ),
-  m_axis_tkeep      (tif2xgmac_axis_tkeep ),
-  m_axis_tlast      (tif2xgmac_axis_tlast ),
-  axis_data_count   (    ),
-  axis_wr_data_count(    ),
-  axis_rd_data_count(    ),
+.s_axis_aresetn    (~reset         ),
+.s_axis_aclk       (clk156         ),
+.s_axis_tvalid     (tx_axis_tvalid ),
+.s_axis_tready     (tx_axis_tready ),
+.s_axis_tdata      (tx_axis_tdata  ),
+.s_axis_tkeep      (tx_axis_tkeep  ),
+.s_axis_tlast      (tx_axis_tlast  ),
+.m_axis_tvalid     (tif2xgmac_axis_tvalid),
+.m_axis_tready     (tif2xgmac_axis_tready),
+.m_axis_tdata      (tif2xgmac_axis_tdata ),
+.m_axis_tkeep      (tif2xgmac_axis_tkeep ),
+.m_axis_tlast      (tif2xgmac_axis_tlast ),
+.axis_data_count   (    ),
+.axis_wr_data_count(    ),
+.axis_rd_data_count(    )
 );       
 
 

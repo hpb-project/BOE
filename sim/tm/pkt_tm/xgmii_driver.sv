@@ -20,7 +20,6 @@ logic [7:0] pkt_data_array[$];
 int unsigned byte_cnt=0;
 logic send_pkt_req=0;
 logic pkt_sending=0;
-
 function set_mbx(mailbox mbx_set);
 	mbx=mbx_set;
 endfunction
@@ -34,9 +33,12 @@ begin
 		mbx.get(pkt);
 		pkt.print_packet();
 		pkt.get_packet(pkt_data_array);
-		$display("pkt field is %p",pkt);
-		wait(send_pkt_req==1'b0)
+		pkt_data_array = {8'h55,8'h55,8'h55,8'h55,8'h55,8'h55,8'hd5,pkt_data_array};
+		//$display("pkt field is %p",pkt);
 		send_pkt_req=1;
+		wait(pkt_sending==1'b1); 
+		send_pkt_req=0;
+		wait(pkt_sending==1'b0); 
 	end
 end
 
@@ -74,7 +76,8 @@ always @(posedge rst,posedge clk)begin
 					if (byte_cnt==pkt_data_array.size()+8) begin 
 						pkt_sending=1'b0;
 						byte_cnt=0;
-					end
+					end else
+					  byte_cnt=byte_cnt+1;
 				end
 			end
 		end

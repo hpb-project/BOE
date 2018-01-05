@@ -90,7 +90,8 @@ module niu_rx #(
   reg [47:0]                 mac_id_sync;
   reg                        mac_id_valid_sync;
   wire                       frame_len_ctr_valid;
-
+  wire [47:0]                dmac_rec; 
+  
   reg  [63:0]  s_axis_tdata_r ;
   reg  [7:0]   s_axis_tkeep_r ;
   reg          s_axis_tvalid_r;
@@ -173,8 +174,9 @@ localparam   THRESHOLD_EXT       = 400;
              rx_stats_vec_reg <= rx_statistics_vector[18:5] - 3'd4;
   end
 
-  assign broadcast_detect = ( s_axis_tdata_r[47:0]== {48{1'b1}})  ? 1'b1 : 1'b0;
-  assign unicast_match    = ((s_axis_tdata_r[47:0]== mac_id_sync) && mac_id_valid_sync) ? 1'b1 : 1'b0;
+  assign dmac_rec       = {s_axis_tdata_r[7:0],s_axis_tdata_r[15:8],s_axis_tdata_r[23:16],s_axis_tdata_r[31:24],s_axis_tdata_r[39:32],s_axis_tdata_r[47:40]};
+  assign broadcast_detect = ( dmac_rec== {48{1'b1}})  ? 1'b1 : 1'b0;
+  assign unicast_match    = ((dmac_rec== mac_id_sync) && mac_id_valid_sync) ? 1'b1 : 1'b0;
   assign da_match         = ((mac_id_filter_en== 1'b0) || broadcast_detect || unicast_match) ? 1'b1 : 1'b0;
  
   assign axis_wr_tvalid = (state_wr==DROP_FRAME) ? 1'b0 : (s_axis_tvalid_r | (force_tlast_to_fifo & (state_wr == BEGIN_WRITE))); 
@@ -269,7 +271,10 @@ always @(posedge user_clk)
                   DA_DECODE :begin
                                  cmd_fifo_wr <= 1'b0; 
                                  cmd_in[1]   <= 1'b1;
-                                 state_wr    <= BEGIN_WRITE;
+                                 if(da_match==1'b1)
+                                      state_wr  <= BEGIN_WRITE;
+                                 else
+                                      state_wr  <= DROP_FRAME;
                              end
                   BEGIN_WRITE:begin
                                  cmd_in[15:2] <= frame_len_ctr_valid ? ((frame_len_ctr << 3) + tkeep_decoded_value) : rx_stats_vec_reg;

@@ -35,7 +35,6 @@ module NIU(
     output[63:0]      rx_axis_tdata,
     output            rx_axis_tvalid,
     output            rx_axis_tlast,
-    output            rx_axis_tuser,
     output[7:0]       rx_axis_tkeep,
     input             rx_axis_tready,
     
@@ -92,7 +91,7 @@ wire[7:0]   tx_ifg_delay;
 wire        signal_detect;
 assign tx_ifg_delay     = 8'h00; 
 assign signal_detect    = 1'b1;
-
+assign tx_fault = 1'b0;
 
 niu_single niu_single_inst
 (
@@ -131,7 +130,6 @@ niu_single niu_single_inst
 
 .rx_axis_tdata (rx_axis_tdata),
 .rx_axis_tvalid(rx_axis_tvalid),
-.rx_axis_tuser (rx_axis_tuser),
 .rx_axis_tlast (rx_axis_tlast),
 .rx_axis_tkeep (rx_axis_tkeep),
 .rx_axis_tready(rx_axis_tready),

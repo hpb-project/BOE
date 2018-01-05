@@ -1,7 +1,6 @@
-set proj_name       "boe_vc709"
+set proj_name       NIU_test_vc709
 set repo_dir        ../BOE
-set root_dir        [pwd]
-set proj_dir        $root_dir/$proj_name
+set proj_dir        $proj_name
 set src_dir         $repo_dir/rtl
 set ip_dir          $repo_dir/ip
 set constraints_dir $repo_dir/constraints
