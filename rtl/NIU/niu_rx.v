@@ -270,11 +270,8 @@ always @(posedge user_clk)
                              end
                   DA_DECODE :begin
                                  cmd_fifo_wr <= 1'b0; 
-                                 cmd_in[1]   <= 1'b1;
-                                 if(da_match==1'b1)
-                                      state_wr  <= BEGIN_WRITE;
-                                 else
-                                      state_wr  <= DROP_FRAME;
+                                 cmd_in[1]   <= da_match; //1'b1;
+                                 state_wr  <= BEGIN_WRITE;
                              end
                   BEGIN_WRITE:begin
                                  cmd_in[15:2] <= frame_len_ctr_valid ? ((frame_len_ctr << 3) + tkeep_decoded_value) : rx_stats_vec_reg;

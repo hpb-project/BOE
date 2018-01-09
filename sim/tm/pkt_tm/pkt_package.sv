@@ -14,6 +14,166 @@ parameter PKT_MODE_TCP         = 3;
 parameter PKT_MODE_UDP         = 4;
 
 
+class BasePacket;
+	logic [7:0]  data[$];
+
+  virtual function print();
+  endfunction
+    
+  virtual function pack(logic [7:0] pack_data[$]);
+      pack_data = data;
+  endfunction
+    
+    
+  function string2array(string string_in,logic [7:0] array_out[$]); //convert string to byte array
+      	
+	    string	string_tmp;
+	    
+	    array_out = {};			 //清空队列
+	    for(int i=0;i<((string_in.len())/2);i++)begin
+	        string_tmp = string_in.substr(i*2,i*2+1);//取出2个字符
+	        array_out[i] = string_tmp.atohex();//转换成数据放入队列
+	    end
+  endfunction     
+        
+
+  function array2string(logic [7:0] array_in[$],string string_out);  //convert string to byte array
+	     string	string_tmp;
+	     
+	     string_out={};
+	     
+	     for(int i=0;i<array_in.size();i++)begin
+	         string_tmp.hextoa(array_in[i]); 
+	         string_out = {string_out,string_tmp};
+	     end
+	endfunction        
+
+
+	virtual function set_data_by_string(string ether_by_string);
+		   
+	     string2array(ether_by_string,data);
+	endfunction
+
+
+endclass
+
+
+class EtherPacket extends BasePacket;
+	integer mode=0;
+	integer delay=0;
+  integer preamble_num=7;
+  logic preamble_en = 1'b0;
+  logic fcs32_en = 1'b1;
+  	
+	logic [7:0]  user_define_pkt[$];
+	
+//ether field	
+	logic [47:0] ether_dmac=0;
+	logic [47:0] ether_smac=0;
+	logic [9:0 ] ether_vlan_id=0;
+	logic [2:0 ] ether_vlan_pri=0;
+	logic        ether_vlan_cfi=0;
+	logic [15:0] ether_ether_type=0;
+	logic [7:0 ] ether_payload[$];
+  logic        ether_vlan_valid=0;
+
+
+	function pack(logic [7:0] pack_data[$]);
+		   
+		   logic [31:0] crc32;
+		   
+		   if (mode==PKT_MODE_USER_DEFINE)
+		   	  pack_data=data;
+		   	  
+		   if (preamble_en==1'b1) begin
+		        pack_data = {8'hd5,pack_data};
+		        for(int i =0;i<preamble_num;i++)
+		            pack_data = {8'h55,pack_data};
+		   end
+		   
+		   if(fcs32_en==1'b1) begin
+     		   crc32=FCS32_CAL(pack_data);
+     		   pack_data={pack_data,{crc32[24],crc32[25],crc32[26],crc32[27],crc32[28],crc32[29],crc32[30],crc32[31]},
+     		                        {crc32[16],crc32[17],crc32[18],crc32[19],crc32[20],crc32[21],crc32[22],crc32[23]},
+     		                        {crc32[8],crc32[9],crc32[10],crc32[11],crc32[12],crc32[13],crc32[14],crc32[15]},
+     		                        {crc32[0],crc32[1],crc32[2],crc32[3],crc32[4],crc32[5],crc32[6],crc32[7]}};
+		   end  		   
+	endfunction
+
+
+
+  function [31:0] FCS32_CAL;
+      input [7:0] pkt_data[$];
+      
+      logic [31:0] crc;
+      logic [7:0] data;
+    
+      begin 
+      	   crc=32'hffffffff;
+    	     for (int i=0;i <pkt_data.size();i++)
+    	     begin
+    	            data=pkt_data[i];
+    	            data={data[0],data[1],data[2],data[3],data[4],data[5],data[6],data[7]};
+    	     				crc = nextCRC32_D8(data,crc);
+           end
+           
+           FCS32_CAL=~crc;
+      end
+   endfunction
+        
+  
+  // polynomial: x^32 + x^26 + x^23 + x^22 + x^16 + x^12 + x^11 + x^10 + x^8 + x^7 + x^5 + x^4 + x^2 + x^1 + 1
+  // data width: 8
+  // convention: the first serial bit is D[7]
+  function [31:0] nextCRC32_D8;
+
+    input [7:0] Data;
+    input [31:0] crc;
+    reg [7:0] d;
+    reg [31:0] c;
+    reg [31:0] newcrc;
+  begin
+    d = Data;
+    c = crc;
+
+    newcrc[0] = d[6] ^ d[0] ^ c[24] ^ c[30];
+    newcrc[1] = d[7] ^ d[6] ^ d[1] ^ d[0] ^ c[24] ^ c[25] ^ c[30] ^ c[31];
+    newcrc[2] = d[7] ^ d[6] ^ d[2] ^ d[1] ^ d[0] ^ c[24] ^ c[25] ^ c[26] ^ c[30] ^ c[31];
+    newcrc[3] = d[7] ^ d[3] ^ d[2] ^ d[1] ^ c[25] ^ c[26] ^ c[27] ^ c[31];
+    newcrc[4] = d[6] ^ d[4] ^ d[3] ^ d[2] ^ d[0] ^ c[24] ^ c[26] ^ c[27] ^ c[28] ^ c[30];
+    newcrc[5] = d[7] ^ d[6] ^ d[5] ^ d[4] ^ d[3] ^ d[1] ^ d[0] ^ c[24] ^ c[25] ^ c[27] ^ c[28] ^ c[29] ^ c[30] ^ c[31];
+    newcrc[6] = d[7] ^ d[6] ^ d[5] ^ d[4] ^ d[2] ^ d[1] ^ c[25] ^ c[26] ^ c[28] ^ c[29] ^ c[30] ^ c[31];
+    newcrc[7] = d[7] ^ d[5] ^ d[3] ^ d[2] ^ d[0] ^ c[24] ^ c[26] ^ c[27] ^ c[29] ^ c[31];
+    newcrc[8] = d[4] ^ d[3] ^ d[1] ^ d[0] ^ c[0] ^ c[24] ^ c[25] ^ c[27] ^ c[28];
+    newcrc[9] = d[5] ^ d[4] ^ d[2] ^ d[1] ^ c[1] ^ c[25] ^ c[26] ^ c[28] ^ c[29];
+    newcrc[10] = d[5] ^ d[3] ^ d[2] ^ d[0] ^ c[2] ^ c[24] ^ c[26] ^ c[27] ^ c[29];
+    newcrc[11] = d[4] ^ d[3] ^ d[1] ^ d[0] ^ c[3] ^ c[24] ^ c[25] ^ c[27] ^ c[28];
+    newcrc[12] = d[6] ^ d[5] ^ d[4] ^ d[2] ^ d[1] ^ d[0] ^ c[4] ^ c[24] ^ c[25] ^ c[26] ^ c[28] ^ c[29] ^ c[30];
+    newcrc[13] = d[7] ^ d[6] ^ d[5] ^ d[3] ^ d[2] ^ d[1] ^ c[5] ^ c[25] ^ c[26] ^ c[27] ^ c[29] ^ c[30] ^ c[31];
+    newcrc[14] = d[7] ^ d[6] ^ d[4] ^ d[3] ^ d[2] ^ c[6] ^ c[26] ^ c[27] ^ c[28] ^ c[30] ^ c[31];
+    newcrc[15] = d[7] ^ d[5] ^ d[4] ^ d[3] ^ c[7] ^ c[27] ^ c[28] ^ c[29] ^ c[31];
+    newcrc[16] = d[5] ^ d[4] ^ d[0] ^ c[8] ^ c[24] ^ c[28] ^ c[29];
+    newcrc[17] = d[6] ^ d[5] ^ d[1] ^ c[9] ^ c[25] ^ c[29] ^ c[30];
+    newcrc[18] = d[7] ^ d[6] ^ d[2] ^ c[10] ^ c[26] ^ c[30] ^ c[31];
+    newcrc[19] = d[7] ^ d[3] ^ c[11] ^ c[27] ^ c[31];
+    newcrc[20] = d[4] ^ c[12] ^ c[28];
+    newcrc[21] = d[5] ^ c[13] ^ c[29];
+    newcrc[22] = d[0] ^ c[14] ^ c[24];
+    newcrc[23] = d[6] ^ d[1] ^ d[0] ^ c[15] ^ c[24] ^ c[25] ^ c[30];
+    newcrc[24] = d[7] ^ d[2] ^ d[1] ^ c[16] ^ c[25] ^ c[26] ^ c[31];
+    newcrc[25] = d[3] ^ d[2] ^ c[17] ^ c[26] ^ c[27];
+    newcrc[26] = d[6] ^ d[4] ^ d[3] ^ d[0] ^ c[18] ^ c[24] ^ c[27] ^ c[28] ^ c[30];
+    newcrc[27] = d[7] ^ d[5] ^ d[4] ^ d[1] ^ c[19] ^ c[25] ^ c[28] ^ c[29] ^ c[31];
+    newcrc[28] = d[6] ^ d[5] ^ d[2] ^ c[20] ^ c[26] ^ c[29] ^ c[30];
+    newcrc[29] = d[7] ^ d[6] ^ d[3] ^ c[21] ^ c[27] ^ c[30] ^ c[31];
+    newcrc[30] = d[7] ^ d[4] ^ c[22] ^ c[28] ^ c[31];
+    newcrc[31] = d[5] ^ c[23] ^ c[29];
+    nextCRC32_D8 = newcrc;
+  end
+  endfunction
+  
+endclass
+
 class c_packet;
 	integer mode=0;
 	integer delay=0;
@@ -316,7 +476,6 @@ class c_packet;
 		    out_tcp_flag      =  tcp_flag         ;    
 	endtask  
        
-endclass
 
   function [31:0] FCS32_CAL;
       input [7:0] pkt_data[$];
@@ -387,6 +546,7 @@ endclass
     nextCRC32_D8 = newcrc;
   end
   endfunction
+endclass
 
 endpackage
 

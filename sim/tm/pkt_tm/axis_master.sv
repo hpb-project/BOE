@@ -14,11 +14,12 @@ output reg        m_axis_tlast
 );
 
 
-c_Packet pkt;
+BasePacket pkt;
 mailbox mbx;
 logic [7:0] data[$];
 
-int unsigned byte_cnt=0;
+int unsigned pkt_axis_size=0;
+int unsigned last_byte_num=0;
 logic send_pkt_req=0;
 logic pkt_sending=0;
 
@@ -42,11 +43,11 @@ begin
 		@(posedge clk);
 		for(int i=0;i<pkt_axis_size;i++)
 		begin
-			if(i=pkt_axis_size-1) begin
+			if(i==pkt_axis_size-1) begin
 				for(int j=0;j<=7;j++) begin
 					if(j<last_byte_num)begin
 					   m_axis_tkeep[j]<=1'b1;
-					   m_axis_tdata[j*8+7 -: 8]  <=data.pop();
+					   m_axis_tdata[j*8+7 -: 8]  <=data.pop_front();
 					end else begin
 					   m_axis_tkeep[j]<=1'b0;
 					   m_axis_tdata[j*8+7 -: 8]  <=0;
@@ -57,21 +58,15 @@ begin
 			end else begin
 				for(int j=0;j<=7;j++) begin
 					   m_axis_tkeep[j]<=1'b1;
-					   m_axis_tdata[j*8+7 -: 8]  <=data.pop();
+					   m_axis_tdata[j*8+7 -: 8]  <=data.pop_front();
         end
 				m_axis_tlast<=1'b0;        				
 				m_axis_tvalid<=1'b1;
 			end
 	  end
-		
-		
-		send_pkt_req=1;
-		wait(pkt_sending==1'b1); 
-		send_pkt_req=0;
-		wait(pkt_sending==1'b0); 
+		@(posedge clk iff m_axis_tready==1'b1);
 	end
 end
-
 
 
 endmodule

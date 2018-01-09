@@ -45,6 +45,7 @@ module NIU(
     input[7:0]        tx_axis_tkeep,
     output            tx_axis_tready,
     
+    output[3:0]       sfp_tx_disable,
     output            clk156_out,
     output            network_reset_done,
  
@@ -188,6 +189,7 @@ xgbaser_gt_same_quad_wrapper #(
 .gt_refclk                         (xge_refclk_i               )
 );
     
+assign sfp_tx_disable = 4'b0000;
 
 
 //---------------------------     Debug      ----------------------------

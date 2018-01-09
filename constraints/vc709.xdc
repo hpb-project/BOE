@@ -18,8 +18,8 @@ set_property PACKAGE_PIN AH8 [get_ports xphy_refclk_p]
 set_property PACKAGE_PIN AH7 [get_ports xphy_refclk_n]
 
 
-create_generated_clock -name clk50 -source [get_ports clk_ref_p] -divide_by 4 [get_pins n10g_interface_inst/clk_divide_reg[1]/Q]
-#set_clock_sense -positive n10g_interface_inst/clk_divide_reg[1]_i_1/O
+create_generated_clock -name clk50 -source [get_ports clk_ref_p] -divide_by 4 [get_pins u_clk_gen/clk_divide_reg[1]/Q]
+#set_clock_sense -positive u_NIU/clk_divide_reg[1]_i_1/O
 
 
 #button
@@ -48,9 +48,9 @@ set_property IOSTANDARD LVCMOS18 [get_ports button_north]
 #set_property LOC RAMB36_X10Y68 [get_cells configIp/trmx/dmx/ram[0].RAMB36_inst]
 
 # Needed by 10GBASE-R IP XDC
-create_clock -name clk156 -period 6.400 [get_pins n10g_interface_inst/xgbaser_gt_wrapper_inst/clk156_bufg_inst/O]
-create_clock -name dclk -period 12.800 [get_pins n10g_interface_inst/xgbaser_gt_wrapper_inst/dclk_bufg_inst/O]
-create_clock -name refclk -period 6.400 [get_pins n10g_interface_inst/xgphy_refclk_ibuf/O]
+create_clock -name clk156 -period 6.400 [get_pins u_NIU/xgbaser_gt_wrapper_inst/clk156_bufg_inst/O]
+create_clock -name dclk -period 12.800 [get_pins u_NIU/xgbaser_gt_wrapper_inst/dclk_bufg_inst/O]
+create_clock -name refclk -period 6.400 [get_pins u_NIU/xgphy_refclk_ibuf/O]
 
 # Needed by SmartCam
 #create_clock -name clkout0 -period 6.400 [get_pins SmartCamCtl_inst/clk_u/clkout1_buf/O]
@@ -95,7 +95,7 @@ set_property IOSTANDARD LVCMOS18 [get_ports {sfp_tx_disable[3]}]
 ## GT placement ## MGT_BANK_113
 
 ## Sample constraint for GT location
-#set_property LOC GTHE2_CHANNEL_X1Y12 [get_cells n10g_interface_inst/network_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i]
+#set_property LOC GTHE2_CHANNEL_X1Y12 [get_cells u_NIU/network_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i]
 #set_property LOC GTHE2_CHANNEL_X1Y13 [get_cells network_inst_1/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i]
 #set_property LOC GTHE2_CHANNEL_X1Y14 [get_cells network_inst_2/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i]
 #set_property LOC GTHE2_CHANNEL_X1Y15 [get_cells network_inst_3/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i]
@@ -135,8 +135,8 @@ set_property PACKAGE_PIN AN5 [get_ports xphy0_rxn]
 #set_property PACKAGE_PIN AJ6 [get_ports xphy3_rxp]
 #set_property PACKAGE_PIN AJ5 [get_ports xphy3_rxn]
 
-#create_clock -name xphy_rxusrclkout0 -period 3.103 [get_pins n10g_interface_inst/network_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/RXOUTCLK]
-#create_clock -name xphy_txusrclkout0 -period 3.103 [get_pins n10g_interface_inst/network_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/TXOUTCLK]
+#create_clock -name xphy_rxusrclkout0 -period 3.103 [get_pins u_NIU/network_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/RXOUTCLK]
+#create_clock -name xphy_txusrclkout0 -period 3.103 [get_pins u_NIU/network_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/TXOUTCLK]
 #create_clock -name xphy_rxusrclkout1 -period 3.103 [get_pins network_inst_1/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/RXOUTCLK]
 #create_clock -name xphy_txusrclkout1 -period 3.103 [get_pins network_inst_1/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/TXOUTCLK]
 #create_clock -name xphy_rxusrclkout2 -period 3.103 [get_pins network_inst_2/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_gth_10gbaser_i/gthe2_i/RXOUTCLK]
