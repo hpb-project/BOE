@@ -315,9 +315,9 @@ NIU  u_NIU (
  .clk156_out(axi_clk),
  .network_reset_done(network_init),
  .led(led_out),
- .mac_id_filter_en(0),
- .mac_id_valid(0),
- .mac_id(0)
+ .mac_id_filter_en(1),
+ .mac_id_valid(1),
+ .mac_id(48'h112233445566)
  );
 
 assign AXI_M_Stream_TDATA = AXI_S_Stream_TDATA;
