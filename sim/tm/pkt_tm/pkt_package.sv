@@ -100,6 +100,15 @@ class EtherPacket extends BasePacket;
 		   end  		   
 	endfunction
 
+	function print();
+		   logic [7:0] temp_data[$];
+		   string      temp_string;
+
+	     pack(temp_data);
+	     array2string(temp_data,temp_string);
+	
+	  	 $display("pkt is %s",temp_string);
+	endfunction
 
 
   function [31:0] FCS32_CAL;

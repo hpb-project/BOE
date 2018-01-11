@@ -86,16 +86,25 @@ xgmii_driver u_xgmii_pkt_driver(
 
 pkt_generator u_axis_pkt_gen();
 
-//axis_driver u_axis_driver(
-//.rst(sys_rst)   ,
-//.clk(sys_clk)   ,
-//.tx_axis_tdata (tx_axis_tdata ),
-//.tx_axis_tvalid(tx_axis_tvalid),
-//.tx_axis_tlast (tx_axis_tlast ),
-//.tx_axis_tuser (tx_axis_tuser ),
-//.tx_axis_tkeep (tx_axis_tkeep ),
-//.tx_axis_tready(tx_axis_tready),
-//);
+axis_master u_axis_master)
+.rst(sys_rst)   ,
+.clk(sys_clk)   ,
+.m_tdata (tx_axis_tdata  ),
+.m_tvalid(tx_axis_tvalid ),
+.m_tlast (tx_axis_tlast  ),
+.m_tkeep (tx_axis_tkeep  ),
+.m_tready(tx_axis_tready )
+);
+
+axis_slave u_axis_slave(
+.rst(sys_rst)   ,
+.clk(sys_clk)   ,
+.s_tdata  (rx_axis_tdata  ),
+.s_tvalid (rx_axis_tvalid ),
+.s_tlast  (rx_axis_tlast  ),
+.s_tkeep  (rx_axis_tkeep  ),
+.s_tready (rx_axis_tready )
+);
 
 
 

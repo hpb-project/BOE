@@ -31,8 +31,8 @@ begin
 	wait(rst==1'b0);
 	forever begin
 		mbx.get(pkt);
-		pkt.print_packet();
-		pkt.get_packet(pkt_data_array);
+		pkt.print();
+		pkt.pack(pkt_data_array);
 		pkt_data_array = {8'h55,8'h55,8'h55,8'h55,8'h55,8'h55,8'hd5,pkt_data_array};
 		//$display("pkt field is %p",pkt);
 		send_pkt_req=1;
