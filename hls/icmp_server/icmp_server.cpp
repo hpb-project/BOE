@@ -438,7 +438,7 @@ void icmp_server(stream<axiWord>&	dataIn,
 	static stream<ap_uint<16> > checksumStreams[2];
 	#pragma HLS STREAM variable=checksumStreams depth=16
 
-	#pragma HLS stream 		variable=packageBuffer1 			depth=64 //TODO change this one is crucial
+	#pragma HLS stream 		variable=packageBuffer1 			depth=512
 	#pragma HLS stream 		variable=udpPort2insertChecksum 	depth=8
 	#pragma HLS stream 		variable=udpPort2addIpHeader_data 	depth=192
 	#pragma HLS stream 		variable=validFifo 					depth=8
