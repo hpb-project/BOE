@@ -699,7 +699,7 @@ mac_ip_encode_ip mac_ip_encode_inst (
 
 .myMacAddress_V(myMacAddress),                                    // input wire [47 : 0] regMacAddress_V
 .regSubNetMask_V(32'h00FFFFFF),                                    // input wire [31 : 0] regSubNetMask_V
-.regDefaultGateway_V(32'h0102A8C0),                            // input wire [31 : 0] regDefaultGateway_V
+.regDefaultGateway_V(32'h01D4010A ), //0102A8C0),                            // input wire [31 : 0] regDefaultGateway_V
   
 .aclk(aclk), // input aclk
 .aresetn(aresetn) // input aresetn

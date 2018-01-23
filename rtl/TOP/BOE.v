@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: HPB
 // Engineer: 
@@ -252,12 +254,12 @@ wire[15:0]  regSessionCount;
 wire[15:0]  relSessionCount;
 
 wire [47:0] myMac;
-wire [47:0] myIP;
+wire [31:0] myIP;
 wire [47:0] myMac_to_network_stack;
-wire [47:0] myIP_to_network_stack;
+wire [31:0] myIP_to_network_stack;
 
-assign myMac=48'h112233445566;
-assign myIP=32'hc0a80205;
+assign myMac=48'h002233445566;  //h000A35029DE5;  //;
+assign myIP=32'h0A01D4D1; //c0a80205;
 assign myMac_to_network_stack = {myMac[7:0],myMac[15:8],myMac[23:16],myMac[31:24],myMac[39:32],myMac[47:40]};
 assign myIP_to_network_stack  = {myIP[7:0],myIP[15:8],myIP[23:16],myIP[31:24]};
 
@@ -1352,5 +1354,7 @@ slupIla slupProbe (
 );*/
 
 endmodule
+
+`default_nettype wire
  
  
