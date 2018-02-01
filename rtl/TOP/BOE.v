@@ -85,7 +85,16 @@ output wire[3:0] sfp_tx_disable,
   output wire                         c1_ddr3_we_n,
   
   input wire                         sys_rst_i,
-  
+
+  //PCIE signal
+  output wire[7 : 0]  pci_exp_txp,
+  output wire[7 : 0]  pci_exp_txn,
+  input  wire[7 : 0]  pci_exp_rxp,
+  input  wire[7 : 0]  pci_exp_rxn,
+  input  wire        pcie_ref_clk_p,
+  input  wire        pcie_ref_clk_n,
+  input  wire        pcie_sys_rst_n,
+    
   // UART
   //input wire                          RxD,
   //output wire                         TxD,
@@ -541,100 +550,7 @@ network_stack network_stack_inst(
 .lbTxMetadataOut_TDATA                  (shim2muxTxMetadataOut_V_TDATA)                // input wire [95 : 0] txMetadataOut_TDATA
 );
 
-reg app_start;
-always @(posedge axi_clk)
-begin
-    if (aresetn == 0) begin
-        app_start <= 0;
-    end
-    else begin
-        app_start <= 1;//1;
-    end
-end
-
-/*
- * Application Module
- */
-//echo_server_application_ip echo_server
-/*
-iperf_ip iperf_server
-//iperf_client_ip iperf_client
-(
-.m_axis_listen_port_TVALID(axis_listen_port_TVALID),
-.m_axis_listen_port_TREADY(axis_listen_port_TREADY),
-.m_axis_listen_port_TDATA(axis_listen_port_TDATA),
-//.m_axis_close_port_TVALID(axis_close_port_TVALID),
-//.m_axis_close_port_TREADY(axis_close_port_TREADY),
-//.m_axis_close_port_TDATA(axis_close_port_TDATA),
-.m_axis_close_connection_TVALID(axis_close_connection_TVALID),
-.m_axis_close_connection_TREADY(axis_close_connection_TREADY),
-.m_axis_close_connection_TDATA(axis_close_connection_TDATA),
-.m_axis_open_connection_TVALID(axis_open_connection_TVALID),
-.m_axis_open_connection_TREADY(axis_open_connection_TREADY),
-.m_axis_open_connection_TDATA(axis_open_connection_TDATA),
-.m_axis_read_package_TVALID(axis_read_package_TVALID),
-.m_axis_read_package_TREADY(axis_read_package_TREADY),
-.m_axis_read_package_TDATA(axis_read_package_TDATA),
-.m_axis_tx_data_TVALID(axis_tx_data_TVALID),
-.m_axis_tx_data_TREADY(axis_tx_data_TREADY),
-.m_axis_tx_data_TDATA(axis_tx_data_TDATA),
-.m_axis_tx_data_TKEEP(axis_tx_data_TKEEP),
-.m_axis_tx_data_TLAST(axis_tx_data_TLAST),
-.m_axis_tx_metadata_TVALID(axis_tx_metadata_TVALID),
-.m_axis_tx_metadata_TREADY(axis_tx_metadata_TREADY),
-.m_axis_tx_metadata_TDATA(axis_tx_metadata_TDATA),
-.s_axis_listen_port_status_TVALID(axis_listen_port_status_TVALID),
-.s_axis_listen_port_status_TREADY(axis_listen_port_status_TREADY),
-.s_axis_listen_port_status_TDATA(axis_listen_port_status_TDATA),
-.s_axis_notifications_TVALID(axis_notifications_TVALID),
-.s_axis_notifications_TREADY(axis_notifications_TREADY),
-.s_axis_notifications_TDATA(axis_notifications_TDATA),
-.s_axis_open_status_TVALID(axis_open_status_TVALID),
-.s_axis_open_status_TREADY(axis_open_status_TREADY),
-.s_axis_open_status_TDATA(axis_open_status_TDATA),
-.s_axis_rx_data_TVALID(axis_rx_data_TVALID),
-.s_axis_rx_data_TREADY(axis_rx_data_TREADY),
-.s_axis_rx_data_TDATA(axis_rx_data_TDATA),
-.s_axis_rx_data_TKEEP(axis_rx_data_TKEEP),
-.s_axis_rx_data_TLAST(axis_rx_data_TLAST),
-.s_axis_rx_metadata_TVALID(axis_rx_metadata_TVALID),
-.s_axis_rx_metadata_TREADY(axis_rx_metadata_TREADY),
-.s_axis_rx_metadata_TDATA(axis_rx_metadata_TDATA),
-.s_axis_tx_status_TVALID(axis_tx_status_TVALID),
-.s_axis_tx_status_TREADY(axis_tx_status_TREADY),
-.s_axis_tx_status_TDATA(axis_tx_status_TDATA),
-
-//Client only
-//.runExperiment_V(runExperiment),
-//.useConn_V(8'h01),
-
-.aclk(axi_clk), // input aclk
-.aresetn(aresetn), // input aresetn
-.ap_start(app_start), // input ap_start
-.ap_ready(), // output ap_ready
-.ap_done(), // output ap_done
-.ap_idle() // output ap_idle
-);*/
-
-//wire        runExperiment;
-//wire        dualMode;
-//wire[7:0]   noOfConnections;
-//wire[7:0]   pkgWordCount;
-
-reg ap_start;
-always@( posedge axi_clk)
-begin
-    if (aresetn == 0) 
-        ap_start = 0;
-    else
-        ap_start = 1;
-end
-
 echo_server_application_ip myEchoServer (
- /* .ap_start(ap_start),                                                      // input wire ap_start
-  .ap_ready(),                                                          // output wire ap_ready
-  .ap_done(),                                                           // output wire ap_done
-  .ap_idle(),                                                           // output wire ap_idle*/
   .m_axis_close_connection_TVALID(axis_close_connection_TVALID),      // output wire m_axis_close_connection_TVALID
   .m_axis_close_connection_TREADY(axis_close_connection_TREADY),      // input wire m_axis_close_connection_TREADY
   .m_axis_close_connection_TDATA(axis_close_connection_TDATA),        // output wire [15 : 0] m_axis_close_connection_TDATA
@@ -644,99 +560,66 @@ echo_server_application_ip myEchoServer (
   .m_axis_open_connection_TVALID(axis_open_connection_TVALID),        // output wire m_axis_open_connection_TVALID
   .m_axis_open_connection_TREADY(axis_open_connection_TREADY),        // input wire m_axis_open_connection_TREADY
   .m_axis_open_connection_TDATA(axis_open_connection_TDATA),          // output wire [47 : 0] m_axis_open_connection_TDATA
-  .m_axis_read_package_TVALID(axis_read_package_TVALID),              // output wire m_axis_read_package_TVALID
-  .m_axis_read_package_TREADY(axis_read_package_TREADY),              // input wire m_axis_read_package_TREADY
-  .m_axis_read_package_TDATA(axis_read_package_TDATA),                // output wire [31 : 0] m_axis_read_package_TDATA
-  .m_axis_tx_data_TVALID(axis_tx_data_TVALID),                        // output wire m_axis_tx_data_TVALID
-  .m_axis_tx_data_TREADY(axis_tx_data_TREADY),                        // input wire m_axis_tx_data_TREADY
-  .m_axis_tx_data_TDATA(axis_tx_data_TDATA),                          // output wire [63 : 0] m_axis_tx_data_TDATA
-  .m_axis_tx_data_TKEEP(axis_tx_data_TKEEP),                          // output wire [7 : 0] m_axis_tx_data_TKEEP
-  .m_axis_tx_data_TLAST(axis_tx_data_TLAST),                          // output wire [0 : 0] m_axis_tx_data_TLAST
-  .m_axis_tx_metadata_TVALID(axis_tx_metadata_TVALID),                // output wire m_axis_tx_metadata_TVALID
-  .m_axis_tx_metadata_TREADY(axis_tx_metadata_TREADY),                // input wire m_axis_tx_metadata_TREADY
-  .m_axis_tx_metadata_TDATA(axis_tx_metadata_TDATA),                  // output wire [15 : 0] m_axis_tx_metadata_TDATA
+//  .m_axis_read_package_TVALID(axis_read_package_TVALID),              // output wire m_axis_read_package_TVALID
+//  .m_axis_read_package_TREADY(axis_read_package_TREADY),              // input wire m_axis_read_package_TREADY
+//  .m_axis_read_package_TDATA(axis_read_package_TDATA),                // output wire [31 : 0] m_axis_read_package_TDATA
+  .m_axis_read_package_TVALID(),              // output wire m_axis_read_package_TVALID
+  .m_axis_read_package_TREADY(0),              // input wire m_axis_read_package_TREADY
+  .m_axis_read_package_TDATA(),                // output wire [31 : 0] m_axis_read_package_TDATA
+//  .m_axis_tx_data_TVALID(axis_tx_data_TVALID),                        // output wire m_axis_tx_data_TVALID
+//  .m_axis_tx_data_TREADY(axis_tx_data_TREADY),                        // input wire m_axis_tx_data_TREADY
+//  .m_axis_tx_data_TDATA(axis_tx_data_TDATA),                          // output wire [63 : 0] m_axis_tx_data_TDATA
+//  .m_axis_tx_data_TKEEP(axis_tx_data_TKEEP),                          // output wire [7 : 0] m_axis_tx_data_TKEEP
+//  .m_axis_tx_data_TLAST(axis_tx_data_TLAST),                          // output wire [0 : 0] m_axis_tx_data_TLAST
+  .m_axis_tx_data_TVALID(),                        // output wire m_axis_tx_data_TVALID
+  .m_axis_tx_data_TREADY(0),                        // input wire m_axis_tx_data_TREADY
+  .m_axis_tx_data_TDATA(),                          // output wire [63 : 0] m_axis_tx_data_TDATA
+  .m_axis_tx_data_TKEEP(),                          // output wire [7 : 0] m_axis_tx_data_TKEEP
+  .m_axis_tx_data_TLAST(),                          // output wire [0 : 0] m_axis_tx_data_TLAST
+//  .m_axis_tx_metadata_TVALID(axis_tx_metadata_TVALID),                // output wire m_axis_tx_metadata_TVALID
+//  .m_axis_tx_metadata_TREADY(axis_tx_metadata_TREADY),                // input wire m_axis_tx_metadata_TREADY
+//  .m_axis_tx_metadata_TDATA(axis_tx_metadata_TDATA),                  // output wire [15 : 0] m_axis_tx_metadata_TDATA
+  .m_axis_tx_metadata_TVALID(),                // output wire m_axis_tx_metadata_TVALID
+  .m_axis_tx_metadata_TREADY(0),                // input wire m_axis_tx_metadata_TREADY
+  .m_axis_tx_metadata_TDATA(),                  // output wire [15 : 0] m_axis_tx_metadata_TDATA
   .s_axis_listen_port_status_TVALID(axis_listen_port_status_TVALID),  // input wire s_axis_listen_port_status_TVALID
   .s_axis_listen_port_status_TREADY(axis_listen_port_status_TREADY),  // output wire s_axis_listen_port_status_TREADY
   .s_axis_listen_port_status_TDATA(axis_listen_port_status_TDATA),    // input wire [7 : 0] s_axis_listen_port_status_TDATA
-  .s_axis_notifications_TVALID(axis_notifications_TVALID),            // input wire s_axis_notifications_TVALID
-  .s_axis_notifications_TREADY(axis_notifications_TREADY),            // output wire s_axis_notifications_TREADY
-  .s_axis_notifications_TDATA(axis_notifications_TDATA),              // input wire [87 : 0] s_axis_notifications_TDATA
+//  .s_axis_notifications_TVALID(axis_notifications_TVALID),            // input wire s_axis_notifications_TVALID
+//  .s_axis_notifications_TREADY(axis_notifications_TREADY),            // output wire s_axis_notifications_TREADY
+//  .s_axis_notifications_TDATA(axis_notifications_TDATA),              // input wire [87 : 0] s_axis_notifications_TDATA
+  .s_axis_notifications_TVALID(0),            // input wire s_axis_notifications_TVALID
+  .s_axis_notifications_TREADY(),            // output wire s_axis_notifications_TREADY
+  .s_axis_notifications_TDATA(0),              // input wire [87 : 0] s_axis_notifications_TDATA
   .s_axis_open_status_TVALID(axis_open_status_TVALID),                // input wire s_axis_open_status_TVALID
   .s_axis_open_status_TREADY(axis_open_status_TREADY),                // output wire s_axis_open_status_TREADY
   .s_axis_open_status_TDATA(axis_open_status_TDATA),                  // input wire [23 : 0] s_axis_open_status_TDATA
-  .s_axis_rx_data_TVALID(axis_rx_data_TVALID),                        // input wire s_axis_rx_data_TVALID
-  .s_axis_rx_data_TREADY(axis_rx_data_TREADY),                        // output wire s_axis_rx_data_TREADY
-  .s_axis_rx_data_TDATA(axis_rx_data_TDATA),                          // input wire [63 : 0] s_axis_rx_data_TDATA
-  .s_axis_rx_data_TKEEP(axis_rx_data_TKEEP),                          // input wire [7 : 0] s_axis_rx_data_TKEEP
-  .s_axis_rx_data_TLAST(axis_rx_data_TLAST),                          // input wire [0 : 0] s_axis_rx_data_TLAST
-  .s_axis_rx_metadata_TVALID(axis_rx_metadata_TVALID),                // input wire s_axis_rx_metadata_TVALID
-  .s_axis_rx_metadata_TREADY(axis_rx_metadata_TREADY),                // output wire s_axis_rx_metadata_TREADY
-  .s_axis_rx_metadata_TDATA(axis_rx_metadata_TDATA),                  // input wire [15 : 0] s_axis_rx_metadata_TDATA
-  .s_axis_tx_status_TVALID(axis_tx_status_TVALID),                    // input wire s_axis_tx_status_TVALID
-  .s_axis_tx_status_TREADY(axis_tx_status_TREADY),                    // output wire s_axis_tx_status_TREADY
-  .s_axis_tx_status_TDATA(axis_tx_status_TDATA),                      // input wire [23 : 0] s_axis_tx_status_TDATA
+//  .s_axis_rx_data_TVALID(axis_rx_data_TVALID),                        // input wire s_axis_rx_data_TVALID
+//  .s_axis_rx_data_TREADY(axis_rx_data_TREADY),                        // output wire s_axis_rx_data_TREADY
+//  .s_axis_rx_data_TDATA(axis_rx_data_TDATA),                          // input wire [63 : 0] s_axis_rx_data_TDATA
+//  .s_axis_rx_data_TKEEP(axis_rx_data_TKEEP),                          // input wire [7 : 0] s_axis_rx_data_TKEEP
+//  .s_axis_rx_data_TLAST(axis_rx_data_TLAST),                          // input wire [0 : 0] s_axis_rx_data_TLAST
+//  .s_axis_rx_metadata_TVALID(axis_rx_metadata_TVALID),                // input wire s_axis_rx_metadata_TVALID
+//  .s_axis_rx_metadata_TREADY(axis_rx_metadata_TREADY),                // output wire s_axis_rx_metadata_TREADY
+//  .s_axis_rx_metadata_TDATA(axis_rx_metadata_TDATA),                  // input wire [15 : 0] s_axis_rx_metadata_TDATA
+  .s_axis_rx_data_TVALID(0),                        // input wire s_axis_rx_data_TVALID
+  .s_axis_rx_data_TREADY(),                        // output wire s_axis_rx_data_TREADY
+  .s_axis_rx_data_TDATA(0),                          // input wire [63 : 0] s_axis_rx_data_TDATA
+  .s_axis_rx_data_TKEEP(0),                          // input wire [7 : 0] s_axis_rx_data_TKEEP
+  .s_axis_rx_data_TLAST(0),                          // input wire [0 : 0] s_axis_rx_data_TLAST
+  .s_axis_rx_metadata_TVALID(0),                // input wire s_axis_rx_metadata_TVALID
+  .s_axis_rx_metadata_TREADY(),                // output wire s_axis_rx_metadata_TREADY
+  .s_axis_rx_metadata_TDATA(0),                  // input wire [15 : 0] s_axis_rx_metadata_TDATA
+//  .s_axis_tx_status_TVALID(axis_tx_status_TVALID),                    // input wire s_axis_tx_status_TVALID
+//  .s_axis_tx_status_TREADY(axis_tx_status_TREADY),                    // output wire s_axis_tx_status_TREADY
+//  .s_axis_tx_status_TDATA(axis_tx_status_TDATA),                      // input wire [23 : 0] s_axis_tx_status_TDATA
+  .s_axis_tx_status_TVALID(0),                    // input wire s_axis_tx_status_TVALID
+  .s_axis_tx_status_TREADY(),                    // output wire s_axis_tx_status_TREADY
+  .s_axis_tx_status_TDATA(0),                      // input wire [23 : 0] s_axis_tx_status_TDATA
   .aclk(axi_clk),                                                          // input wire aclk
   .aresetn(aresetn)                                                    // input wire aresetn
 );
-/*
-iperf_client_0 iperf_client_inst (
-  .runExperiment_V(runExperiment),                                    // input wire [0 : 0] runExperiment_V
-  .dualModeEn_V(dualMode),                                          // input wire [0 : 0] dualModeEn_V
-  .useConn_V(noOfConnections),                                                // input wire [7 : 0] useConn_V
-  .pkgWordCount_V(pkgWordCount),                                      // input wire [7 : 0] pkgWordCount_V
-  .regIpAddress1_V(32'h01010114),                                    // input wire [31 : 0] regIpAddress1_V
-  .m_axis_close_connection_TVALID(axis_close_connection_TVALID),      // output wire m_axis_close_connection_TVALID
-  .m_axis_close_connection_TREADY(axis_close_connection_TREADY),      // input wire m_axis_close_connection_TREADY
-  .m_axis_close_connection_TDATA(axis_close_connection_TDATA),        // output wire [15 : 0] m_axis_close_connection_TDATA
-  .m_axis_listen_port_TVALID(axis_listen_port_TVALID),                // output wire m_axis_listen_port_TVALID
-  .m_axis_listen_port_TREADY(axis_listen_port_TREADY),                // input wire m_axis_listen_port_TREADY
-  .m_axis_listen_port_TDATA(axis_listen_port_TDATA),                  // output wire [15 : 0] m_axis_listen_port_TDATA
-  .m_axis_open_connection_TVALID(axis_open_connection_TVALID),        // output wire m_axis_open_connection_TVALID
-  .m_axis_open_connection_TREADY(axis_open_connection_TREADY),        // input wire m_axis_open_connection_TREADY
-  .m_axis_open_connection_TDATA(axis_open_connection_TDATA),          // output wire [47 : 0] m_axis_open_connection_TDATA
-  .m_axis_read_package_TVALID(axis_read_package_TVALID),              // output wire m_axis_read_package_TVALID
-  .m_axis_read_package_TREADY(axis_read_package_TREADY),              // input wire m_axis_read_package_TREADY
-  .m_axis_read_package_TDATA(axis_read_package_TDATA),                // output wire [31 : 0] m_axis_read_package_TDATA
-  .m_axis_tx_data_TVALID(axis_tx_data_TVALID),                        // output wire m_axis_tx_data_TVALID
-  .m_axis_tx_data_TREADY(axis_tx_data_TREADY),                        // input wire m_axis_tx_data_TREADY
-  .m_axis_tx_data_TDATA(axis_tx_data_TDATA),                          // output wire [63 : 0] m_axis_tx_data_TDATA
-  .m_axis_tx_data_TKEEP(axis_tx_data_TKEEP),                          // output wire [7 : 0] m_axis_tx_data_TKEEP
-  .m_axis_tx_data_TLAST(axis_tx_data_TLAST),                          // output wire [0 : 0] m_axis_tx_data_TLAST
-  .m_axis_tx_metadata_TVALID(axis_tx_metadata_TVALID),                // output wire m_axis_tx_metadata_TVALID
-  .m_axis_tx_metadata_TREADY(axis_tx_metadata_TREADY),                // input wire m_axis_tx_metadata_TREADY
-  .m_axis_tx_metadata_TDATA(axis_tx_metadata_TDATA),                  // output wire [15 : 0] m_axis_tx_metadata_TDATA
-  .s_axis_listen_port_status_TVALID(axis_listen_port_status_TVALID),  // input wire s_axis_listen_port_status_TVALID
-  .s_axis_listen_port_status_TREADY(axis_listen_port_status_TREADY),  // output wire s_axis_listen_port_status_TREADY
-  .s_axis_listen_port_status_TDATA(axis_listen_port_status_TDATA),    // input wire [7 : 0] s_axis_listen_port_status_TDATA
-  .s_axis_notifications_TVALID(axis_notifications_TVALID),            // input wire s_axis_notifications_TVALID
-  .s_axis_notifications_TREADY(axis_notifications_TREADY),            // output wire s_axis_notifications_TREADY
-  .s_axis_notifications_TDATA(axis_notifications_TDATA),              // input wire [87 : 0] s_axis_notifications_TDATA
-  .s_axis_open_status_TVALID(axis_open_status_TVALID),                // input wire s_axis_open_status_TVALID
-  .s_axis_open_status_TREADY(axis_open_status_TREADY),                // output wire s_axis_open_status_TREADY
-  .s_axis_open_status_TDATA(axis_open_status_TDATA),                  // input wire [23 : 0] s_axis_open_status_TDATA
-  .s_axis_rx_data_TVALID(axis_rx_data_TVALID),                        // input wire s_axis_rx_data_TVALID
-  .s_axis_rx_data_TREADY(axis_rx_data_TREADY),                        // output wire s_axis_rx_data_TREADY
-  .s_axis_rx_data_TDATA(axis_rx_data_TDATA),                          // input wire [63 : 0] s_axis_rx_data_TDATA
-  .s_axis_rx_data_TKEEP(axis_rx_data_TKEEP),                          // input wire [7 : 0] s_axis_rx_data_TKEEP
-  .s_axis_rx_data_TLAST(axis_rx_data_TLAST),                          // input wire [0 : 0] s_axis_rx_data_TLAST
-  .s_axis_rx_metadata_TVALID(axis_rx_metadata_TVALID),                // input wire s_axis_rx_metadata_TVALID
-  .s_axis_rx_metadata_TREADY(axis_rx_metadata_TREADY),                // output wire s_axis_rx_metadata_TREADY
-  .s_axis_rx_metadata_TDATA(axis_rx_metadata_TDATA),                  // input wire [15 : 0] s_axis_rx_metadata_TDATA
-  .s_axis_tx_status_TVALID(axis_tx_status_TVALID),                    // input wire s_axis_tx_status_TVALID
-  .s_axis_tx_status_TREADY(axis_tx_status_TREADY),                    // output wire s_axis_tx_status_TREADY
-  .s_axis_tx_status_TDATA(axis_tx_status_TDATA),                      // input wire [23 : 0] s_axis_tx_status_TDATA
-  .aclk(axi_clk),                                                     // input wire aclk
-  .aresetn(aresetn)                                                   // input wire aresetn
-);*/
-/*
-vio_ip myVIO (
-  .clk(axi_clk),                    // input wire clk
-  .probe_in0(),                     // input wire [0 : 0] probe_in0
-  .probe_out0(runExperiment),       // output wire [0 : 0] probe_out0
-  .probe_out1(dualMode),            // output wire [0 : 0] probe_out1
-  .probe_out2(noOfConnections),     // output wire [7 : 0] probe_out2
-  .probe_out3(pkgWordCount)         // output wire [7 : 0] probe_out3
-);*/
+
 
 udpLoopback_0 udpLoopback_inst (
   .lbPortOpenReplyIn_TVALID(mux2shim_portOpenReplyIn_V_V_TVALID),       // input wire portOpenReplyIn_TVALID
@@ -1289,69 +1172,237 @@ mem_inf_inst(
 .upd_s_axis_write_tready(upd_s_axis_write_tready)
 );
 
-/*assign usr_led[0] = init_calib_complete;
-assign usr_led[1] = perst_n & pok_dram;
-assign usr_led[2] = app_start;
-assign usr_led[5:3] = 0;*/
-/*
-always@ (posedge axi_clk)
-begin
- if (toeRX_s_axis_write_cmd_tvalid == 1)
-    wrCmdCounter = wrCmdCounter + 1;
 
-end
+wire pcie_ref_clk;
+   // AXI ST interface to user
+ wire [63:0]      m_axis_h2c_tdata_0;
+ wire             m_axis_h2c_tlast_0;
+ wire             m_axis_h2c_tvalid_0;
+ wire             m_axis_h2c_tready_0;
+ wire [63:0]      m_axis_h2c_tdata_1;
+ wire             m_axis_h2c_tlast_1;
+ wire             m_axis_h2c_tvalid_1;
+ wire             m_axis_h2c_tready_1;
+ wire [63:0]      m_axis_h2c_tdata_2;
+ wire             m_axis_h2c_tlast_2;
+ wire             m_axis_h2c_tvalid_2;
+ wire             m_axis_h2c_tready_2;
+ wire [63:0]      m_axis_h2c_tdata_3;
+ wire             m_axis_h2c_tlast_3;
+ wire             m_axis_h2c_tvalid_3;
+ wire             m_axis_h2c_tready_3;
 
-always@ (posedge axi_clk)
-begin
- if (toeRX_s_axis_read_cmd_tvalid == 1)
-    rdCmdCounter = rdCmdCounter + 1;
+ wire [63:0]      s_axis_c2h_tdata_0;
+ wire             s_axis_c2h_tlast_0;
+ wire             s_axis_c2h_tvalid_0;
+ wire             s_axis_c2h_tready_0;
+ wire [63:0]      s_axis_c2h_tdata_1;
+ wire             s_axis_c2h_tlast_1;
+ wire             s_axis_c2h_tvalid_1;
+ wire             s_axis_c2h_tready_1;
+ wire [63:0]      s_axis_c2h_tdata_2;
+ wire             s_axis_c2h_tlast_2;
+ wire             s_axis_c2h_tvalid_2;
+ wire             s_axis_c2h_tready_2;
+ wire [63:0]      s_axis_c2h_tdata_3;
+ wire             s_axis_c2h_tlast_3;
+ wire             s_axis_c2h_tvalid_3;
+ wire             s_axis_c2h_tready_3;
 
-end
+   wire 					   user_clk;
+   wire 					   user_resetn;
+   wire 					   user_lnk_up;
 
-always@ (posedge axi_clk)
-begin
- if (axis_read_package_TVALID == 1)
-    rdAppCounter = rdAppCounter + 1;
 
-end*/
+  IBUFDS_GTE2 refclk_ibuf (.O(pcie_ref_clk), .ODIV2(), .I(pcie_ref_clk_p), .CEB(1'b0), .IB(pcie_ref_clk_n));
+assign m_axis_h2c_tready_3 = 0;
 
-/*dataIla rxWrIla (
-	.clk(axi_clk), // input wire clk
-	.probe0(axis_rxwrite_data_TREADY), // input wire [0:0]  probe0  
-	.probe1(axis_rxwrite_data_TVALID), // input wire [0:0]  probe1 
-	.probe2(axis_rxwrite_data_TLAST), // input wire [0:0]  probe2
-	.probe3(wrCmdCounter)
+ axis_clock_converter_64b u_clk_conv_tx_req(
+ .s_axis_aresetn (                       ),
+ .m_axis_aresetn (                       ),
+ .s_axis_aclk    (                       ),
+ .s_axis_tvalid  (m_axis_h2c_tvalid_0    ),
+ .s_axis_tready  (m_axis_h2c_tready_0    ),
+ .s_axis_tdata   (m_axis_h2c_tdata_0     ),
+ .s_axis_tlast   (m_axis_h2c_tlast_0     ),
+ .m_axis_aclk    (                       ),
+ .m_axis_tvalid  (axis_tx_metadata_TVALID),       
+ .m_axis_tready  (axis_tx_metadata_TREADY),       
+ .m_axis_tdata   (axis_tx_metadata_TDATA ),
+ .m_axis_tlast   (                       )
 );
 
-cmdIla rxWrCmdIla (
-	.clk(axi_clk), // input wire clk
-	.probe0(axis_rxwrite_cmd_TDATA), // input wire [71:0]  probe0  
-	.probe1(axis_rxwrite_cmd_TVALID), // input wire [0:0]  probe1 
-	.probe2(axis_rxwrite_cmd_TREADY), // input wire [0:0]  probe2
-	.probe3(wrCmdCounter)
+ axis_clock_converter_64b u_clk_conv_tx_reponse(
+ .s_axis_aresetn (                       ),
+ .m_axis_aresetn (                       ),
+ .s_axis_aclk    (                       ),
+ .s_axis_tvalid  (axis_tx_status_TVALID    ),
+ .s_axis_tready  (axis_tx_status_TREADY    ),
+ .s_axis_tdata   ({40'b0,axis_tx_status_TDATA} ),
+ .s_axis_tlast   (1'b1                     ),
+ .m_axis_aclk    (                       ),
+ .m_axis_tvalid  (s_axis_c2h_tvalid_0),       
+ .m_axis_tready  (s_axis_c2h_tready_0),       
+ .m_axis_tdata   (s_axis_c2h_tdata_0 ),
+ .m_axis_tlast   (s_axis_c2h_tlast_0 )
 );
 
-stsIla rxWrStatusIla (
-	.clk(axi_clk), // input wire clk
-	.probe0(axis_rxwrite_sts_TDATA), // input wire [7:0]  probe0  
-	.probe1(1'b0), // input wire [0:0]  probe1 
-	.probe2(axis_rxwrite_sts_TVALID) // input wire [0:0]  probe2
-);*/
-/*
-sessionIla sessionProbe (
-	.clk(axi_clk), // input wire clk
-	.probe0(regSessionCount), // input wire [15:0]  probe0  
-	.probe1(relSessionCount) // input wire [15:0]  probe1
+ axis_clock_converter_64b u_clk_conv_tx_data(
+ .s_axis_aresetn (                       ),
+ .m_axis_aresetn (                       ),
+ .s_axis_aclk    (                       ),
+ .s_axis_tvalid  (m_axis_h2c_tvalid_1    ),
+ .s_axis_tready  (m_axis_h2c_tready_1    ),
+ .s_axis_tdata   (m_axis_h2c_tdata_1     ),
+ .s_axis_tlast   (m_axis_h2c_tlast_1     ),
+ .m_axis_aclk    (                       ),
+ .m_axis_tvalid  (axis_tx_data_TVALID),       
+ .m_axis_tready  (axis_tx_data_TREADY),       
+ .m_axis_tdata   (axis_tx_data_TDATA ),
+ .m_axis_tlast   (axis_tx_data_TLAST )
+);
+assign axis_tx_data_TKEEP = 8'hff;
+
+ 
+ axis_dwidth_converter_128to64 u_data_conv_rx_notify(
+.aclk           (                       ),
+.aresetn        (                       ),
+.s_axis_tvalid  (axis_notifications_TVALID    ),
+.s_axis_tready  (axis_notifications_TREADY    ),
+.s_axis_tdata   ({40'b0,axis_notifications_TDATA} ),
+.s_axis_tlast   (1'b1 ),
+.m_axis_tvalid  (axis_notifications_TVALID_64),       
+.m_axis_tready  (axis_notifications_TREADY_64),       
+.m_axis_tdata   (axis_notifications_TDATA_64 ),
+.m_axis_tlast   (axis_notifications_TLAST_64 )
 );
 
-slupIla slupProbe (
-	.clk(axi_clk), // input wire clk
-	.probe0(upd_req_TVALID_out), // input wire [0:0]  probe0  
-	.probe1(upd_req_TREADY_out), // input wire [0:0]  probe1 
-	.probe2(upd_req_TDATA_out), // input wire [0:0]  probe2 
-	.probe3(upd_rsp_TVALID_out), // input wire [0:0]  probe3 
-	.probe4(upd_rsp_TREADY_out) // input wire [0:0]  probe4
-);*/
+axis_clock_converter_64b u_clk_conv_rx_notify(
+.s_axis_aresetn (                       ),
+.m_axis_aresetn (                       ),
+.s_axis_aclk    (                       ),
+.s_axis_tvalid  (axis_notifications_TVALID_64    ),
+.s_axis_tready  (axis_notifications_TREADY_64    ),
+.s_axis_tdata   (axis_notifications_TDATA_64 ),
+.s_axis_tlast   (axis_notifications_TLAST_64 ),
+.m_axis_aclk    (                       ),
+.m_axis_tvalid  (s_axis_c2h_tvalid_1),       
+.m_axis_tready  (s_axis_c2h_tready_1),       
+.m_axis_tdata   (s_axis_c2h_tdata_1 ),
+.m_axis_tlast   (s_axis_c2h_tlast_1 )
+);
+
+
+ axis_clock_converter_64b u_clk_conv_rx_req(
+ .s_axis_aresetn (                       ),
+ .m_axis_aresetn (                       ),
+ .s_axis_aclk    (                       ),
+ .s_axis_tvalid  (m_axis_h2c_tvalid_2    ),
+ .s_axis_tready  (m_axis_h2c_tready_2    ),
+ .s_axis_tdata   (m_axis_h2c_tdata_2     ),
+ .s_axis_tlast   (m_axis_h2c_tlast_2     ),
+ .m_axis_aclk    (                       ),
+ .m_axis_tvalid  (axis_read_package_TVALID),       
+ .m_axis_tready  (axis_read_package_TREADY),       
+ .m_axis_tdata   (axis_read_package_TDATA ),
+ .m_axis_tlast   (                       )
+);
+
+
+ axis_clock_converter_64b u_clk_conv_rx_data(
+.s_axis_aresetn (                       ),
+.m_axis_aresetn (                       ),
+.s_axis_aclk    (                       ),
+.s_axis_tvalid  (axis_rx_data_TVALID    ),
+.s_axis_tready  (axis_rx_data_TREADY    ),
+.s_axis_tdata   (axis_rx_data_TDATA ),
+.s_axis_tlast   (axis_rx_data_TLAST ),
+.m_axis_aclk    (                       ),
+.m_axis_tvalid  (s_axis_c2h_tvalid_2),       
+.m_axis_tready  (s_axis_c2h_tready_2),       
+.m_axis_tdata   (s_axis_c2h_tdata_2 ),
+.m_axis_tlast   (s_axis_c2h_tlast_2 )
+);
+ 
+ axis_clock_converter_64b u_clk_conv_rx_reponse(
+.s_axis_aresetn (                       ),
+.m_axis_aresetn (                       ),
+.s_axis_aclk    (                       ),
+.s_axis_tvalid  (axis_rx_metadata_TVALID    ),
+.s_axis_tready  (axis_rx_metadata_TREADY    ),
+.s_axis_tdata   ({48'b0,axis_rx_metadata_TDATA } ),
+.s_axis_tlast   (1'b1     ),
+.m_axis_aclk    (                       ),
+.m_axis_tvalid  (s_axis_c2h_tvalid_3),       
+.m_axis_tready  (s_axis_c2h_tready_3),       
+.m_axis_tdata   (s_axis_c2h_tdata_3 ),
+.m_axis_tlast   (s_axis_c2h_tlast_3 )
+);
+  
+
+
+  xdma_0 xdma_0_i 
+     (
+      //---------------------------------------------------------------------------------------//
+      //  PCI Express (pci_exp) Interface                                                      //
+      //---------------------------------------------------------------------------------------//
+      .sys_clk         ( pcie_ref_clk ),
+      .sys_rst_n       ( pcie_sys_rst_n ),
+      // Tx
+      .pci_exp_txn     ( pci_exp_txn ),
+      .pci_exp_txp     ( pci_exp_txp ),
+      // Rx
+      .pci_exp_rxn     ( pci_exp_rxn ),
+      .pci_exp_rxp     ( pci_exp_rxp ),
+      // AXI streaming ports
+      .s_axis_c2h_tdata_0   (s_axis_c2h_tdata_0),
+      .s_axis_c2h_tlast_0   (s_axis_c2h_tlast_0),
+      .s_axis_c2h_tvalid_0  (s_axis_c2h_tvalid_0),
+      .s_axis_c2h_tready_0  (s_axis_c2h_tready_0),
+      .s_axis_c2h_tdata_1   (s_axis_c2h_tdata_1),
+      .s_axis_c2h_tlast_1   (s_axis_c2h_tlast_1),
+      .s_axis_c2h_tvalid_1  (s_axis_c2h_tvalid_1),
+      .s_axis_c2h_tready_1  (s_axis_c2h_tready_1),
+      .s_axis_c2h_tdata_2   (s_axis_c2h_tdata_2),
+      .s_axis_c2h_tlast_2   (s_axis_c2h_tlast_2),
+      .s_axis_c2h_tvalid_2  (s_axis_c2h_tvalid_2),
+      .s_axis_c2h_tready_2  (s_axis_c2h_tready_2),
+      .s_axis_c2h_tdata_3   (s_axis_c2h_tdata_3),
+      .s_axis_c2h_tlast_3   (s_axis_c2h_tlast_3),
+      .s_axis_c2h_tvalid_3  (s_axis_c2h_tvalid_3),
+      .s_axis_c2h_tready_3  (s_axis_c2h_tready_3),
+      .m_axis_h2c_tdata_0   (m_axis_h2c_tdata_0),
+      .m_axis_h2c_tlast_0   (m_axis_h2c_tlast_0),
+      .m_axis_h2c_tvalid_0  (m_axis_h2c_tvalid_0),
+      .m_axis_h2c_tready_0  (m_axis_h2c_tready_0),
+      .m_axis_h2c_tdata_1   (m_axis_h2c_tdata_1),
+      .m_axis_h2c_tlast_1   (m_axis_h2c_tlast_1),
+      .m_axis_h2c_tvalid_1  (m_axis_h2c_tvalid_1),
+      .m_axis_h2c_tready_1  (m_axis_h2c_tready_1),
+      .m_axis_h2c_tdata_2   (m_axis_h2c_tdata_2),
+      .m_axis_h2c_tlast_2   (m_axis_h2c_tlast_2),
+      .m_axis_h2c_tvalid_2  (m_axis_h2c_tvalid_2),
+      .m_axis_h2c_tready_2  (m_axis_h2c_tready_2),
+      .m_axis_h2c_tdata_3   (m_axis_h2c_tdata_3),
+      .m_axis_h2c_tlast_3   (m_axis_h2c_tlast_3),
+      .m_axis_h2c_tvalid_3  (m_axis_h2c_tvalid_3),
+      .m_axis_h2c_tready_3  (m_axis_h2c_tready_3),
+
+     .usr_irq_req       (0),
+     .usr_irq_ack       (),
+     //-- AXI Global
+      .axi_aclk        ( user_clk ),
+      .axi_aresetn     ( user_resetn ),
+      .user_lnk_up     ( user_lnk_up )
+     );
+
+
+
+
+
+
+
+
 
 endmodule
 
