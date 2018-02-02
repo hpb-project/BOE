@@ -286,3 +286,16 @@ set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets clk233]
 
 set_clock_groups -name clk156_pll_i -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks clk156]
 set_clock_groups -name clk156_pll_i_1 -asynchronous -group [get_clocks clk_pll_i_1] -group [get_clocks clk156]
+
+
+
+
+create_clock -period 10.000 -name pcie_ref_clk [get_ports pcie_ref_clk_p]
+set_false_path -from [get_ports pcie_sys_rst_n]
+set_property PACKAGE_PIN AV35 [get_ports pcie_sys_rst_n]
+set_property IOSTANDARD LVCMOS18 [get_ports pcie_sys_rst_n]
+set_property PULLUP true [get_ports pcie_sys_rst_n]
+set_property CONFIG_VOLTAGE 1.8 [current_design]
+set_property CFGBVS GND [current_design]
+set_property LOC IBUFDS_GTE2_X1Y11 [get_cells refclk_ibuf]
+set_false_path -to [get_ports -filter NAME=~led_*]
