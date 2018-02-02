@@ -286,7 +286,7 @@ always @(posedge axi_clk) begin
     //regIpAddress1 <= vio_cmd[49:18];
     //numCons <= vio_cmd[33:18];
 end
-assign led = led_reg;
+//assign led = led_reg;
 
 clock_gen u_clk_gen(
 .clk_ref_p(clk_ref_p),
@@ -1209,133 +1209,155 @@ wire pcie_ref_clk;
  wire             s_axis_c2h_tvalid_3;
  wire             s_axis_c2h_tready_3;
 
-   wire 					   user_clk;
-   wire 					   user_resetn;
-   wire 					   user_lnk_up;
+   wire 		  pcie_user_clk;
+   wire 		  pcie_user_resetn;
+   wire 		  pcie_user_lnk_up;
+   
+   wire        axis_notifications_TVALID_64;
+   wire        axis_notifications_TREADY_64;
+   wire[63:0]  axis_notifications_TDATA_64;
+   wire[7:0]   axis_notifications_TKEEP_64;
+   wire[7:0]   axis_notifications_TLAST_64;
 
 
   IBUFDS_GTE2 refclk_ibuf (.O(pcie_ref_clk), .ODIV2(), .I(pcie_ref_clk_p), .CEB(1'b0), .IB(pcie_ref_clk_n));
+  
 assign m_axis_h2c_tready_3 = 0;
 
  axis_clock_converter_64b u_clk_conv_tx_req(
- .s_axis_aresetn (                       ),
- .m_axis_aresetn (                       ),
- .s_axis_aclk    (                       ),
+ .s_axis_aresetn (pcie_user_resetn       ),
+ .m_axis_aresetn (aresetn                ),
+ .s_axis_aclk    (pcie_user_clk          ),
  .s_axis_tvalid  (m_axis_h2c_tvalid_0    ),
  .s_axis_tready  (m_axis_h2c_tready_0    ),
  .s_axis_tdata   (m_axis_h2c_tdata_0     ),
+ .s_axis_tkeep   (8'hff                  ),
  .s_axis_tlast   (m_axis_h2c_tlast_0     ),
- .m_axis_aclk    (                       ),
+ .m_axis_aclk    (axi_clk                ),
  .m_axis_tvalid  (axis_tx_metadata_TVALID),       
  .m_axis_tready  (axis_tx_metadata_TREADY),       
  .m_axis_tdata   (axis_tx_metadata_TDATA ),
+ .m_axis_tkeep   (                       ),
  .m_axis_tlast   (                       )
 );
 
  axis_clock_converter_64b u_clk_conv_tx_reponse(
- .s_axis_aresetn (                       ),
- .m_axis_aresetn (                       ),
- .s_axis_aclk    (                       ),
+ .s_axis_aresetn (aresetn                  ),
+ .m_axis_aresetn (pcie_user_resetn         ),
+ .s_axis_aclk    (axi_clk                  ),
  .s_axis_tvalid  (axis_tx_status_TVALID    ),
  .s_axis_tready  (axis_tx_status_TREADY    ),
  .s_axis_tdata   ({40'b0,axis_tx_status_TDATA} ),
  .s_axis_tlast   (1'b1                     ),
- .m_axis_aclk    (                       ),
+ .s_axis_tkeep   (8'hff                    ),
+ .m_axis_aclk    (pcie_user_clk      ),
  .m_axis_tvalid  (s_axis_c2h_tvalid_0),       
  .m_axis_tready  (s_axis_c2h_tready_0),       
  .m_axis_tdata   (s_axis_c2h_tdata_0 ),
+ .m_axis_tkeep   (                   ),
  .m_axis_tlast   (s_axis_c2h_tlast_0 )
 );
 
  axis_clock_converter_64b u_clk_conv_tx_data(
- .s_axis_aresetn (                       ),
- .m_axis_aresetn (                       ),
- .s_axis_aclk    (                       ),
+ .s_axis_aresetn (pcie_user_resetn       ),
+ .m_axis_aresetn (aresetn                ),
+ .s_axis_aclk    (pcie_user_clk          ),
  .s_axis_tvalid  (m_axis_h2c_tvalid_1    ),
  .s_axis_tready  (m_axis_h2c_tready_1    ),
  .s_axis_tdata   (m_axis_h2c_tdata_1     ),
+ .s_axis_tkeep   (8'hff                  ),
  .s_axis_tlast   (m_axis_h2c_tlast_1     ),
- .m_axis_aclk    (                       ),
+ .m_axis_aclk    (axi_clk                ),
  .m_axis_tvalid  (axis_tx_data_TVALID),       
  .m_axis_tready  (axis_tx_data_TREADY),       
  .m_axis_tdata   (axis_tx_data_TDATA ),
+ .m_axis_tkeep   (axis_tx_data_TKEEP ),
  .m_axis_tlast   (axis_tx_data_TLAST )
 );
-assign axis_tx_data_TKEEP = 8'hff;
 
  
  axis_dwidth_converter_128to64 u_data_conv_rx_notify(
-.aclk           (                       ),
-.aresetn        (                       ),
+.aclk           (axi_clk                ),
+.aresetn        (aresetn                ),
 .s_axis_tvalid  (axis_notifications_TVALID    ),
 .s_axis_tready  (axis_notifications_TREADY    ),
 .s_axis_tdata   ({40'b0,axis_notifications_TDATA} ),
-.s_axis_tlast   (1'b1 ),
+.s_axis_tkeep   (16'hffff                     ),
+.s_axis_tlast   (1'b1                         ),
 .m_axis_tvalid  (axis_notifications_TVALID_64),       
 .m_axis_tready  (axis_notifications_TREADY_64),       
 .m_axis_tdata   (axis_notifications_TDATA_64 ),
+.m_axis_tkeep   (axis_notifications_TKEEP_64 ),
 .m_axis_tlast   (axis_notifications_TLAST_64 )
 );
 
 axis_clock_converter_64b u_clk_conv_rx_notify(
-.s_axis_aresetn (                       ),
-.m_axis_aresetn (                       ),
-.s_axis_aclk    (                       ),
-.s_axis_tvalid  (axis_notifications_TVALID_64    ),
-.s_axis_tready  (axis_notifications_TREADY_64    ),
+.s_axis_aresetn (aresetn                ),
+.m_axis_aresetn (pcie_user_resetn       ),
+.s_axis_aclk    (axi_clk                ),
+.s_axis_tvalid  (axis_notifications_TVALID_64),
+.s_axis_tready  (axis_notifications_TREADY_64),
 .s_axis_tdata   (axis_notifications_TDATA_64 ),
+.s_axis_tkeep   (axis_notifications_TKEEP_64 ),
 .s_axis_tlast   (axis_notifications_TLAST_64 ),
-.m_axis_aclk    (                       ),
+.m_axis_aclk    (pcie_user_clk      ),
 .m_axis_tvalid  (s_axis_c2h_tvalid_1),       
 .m_axis_tready  (s_axis_c2h_tready_1),       
 .m_axis_tdata   (s_axis_c2h_tdata_1 ),
+.m_axis_tkeep   (                   ),
 .m_axis_tlast   (s_axis_c2h_tlast_1 )
 );
 
 
  axis_clock_converter_64b u_clk_conv_rx_req(
- .s_axis_aresetn (                       ),
- .m_axis_aresetn (                       ),
- .s_axis_aclk    (                       ),
+ .s_axis_aresetn (pcie_user_resetn       ),
+ .m_axis_aresetn (aresetn                ),
+ .s_axis_aclk    (pcie_user_clk          ),
  .s_axis_tvalid  (m_axis_h2c_tvalid_2    ),
  .s_axis_tready  (m_axis_h2c_tready_2    ),
  .s_axis_tdata   (m_axis_h2c_tdata_2     ),
+ .s_axis_tkeep   (8'hff                  ),
  .s_axis_tlast   (m_axis_h2c_tlast_2     ),
- .m_axis_aclk    (                       ),
+ .m_axis_aclk    (axi_clk                ),
  .m_axis_tvalid  (axis_read_package_TVALID),       
  .m_axis_tready  (axis_read_package_TREADY),       
  .m_axis_tdata   (axis_read_package_TDATA ),
- .m_axis_tlast   (                       )
+ .m_axis_tkeep   (                        ),
+ .m_axis_tlast   (                        )
 );
 
 
  axis_clock_converter_64b u_clk_conv_rx_data(
-.s_axis_aresetn (                       ),
-.m_axis_aresetn (                       ),
-.s_axis_aclk    (                       ),
+.s_axis_aresetn (aresetn                ),
+.m_axis_aresetn (pcie_user_resetn       ),
+.s_axis_aclk    (axi_clk                ),
 .s_axis_tvalid  (axis_rx_data_TVALID    ),
 .s_axis_tready  (axis_rx_data_TREADY    ),
 .s_axis_tdata   (axis_rx_data_TDATA ),
+.s_axis_tkeep   (axis_rx_data_TKEEP ),
 .s_axis_tlast   (axis_rx_data_TLAST ),
-.m_axis_aclk    (                       ),
+.m_axis_aclk    (pcie_user_clk      ),
 .m_axis_tvalid  (s_axis_c2h_tvalid_2),       
 .m_axis_tready  (s_axis_c2h_tready_2),       
 .m_axis_tdata   (s_axis_c2h_tdata_2 ),
+.m_axis_tkeep   (                   ),
 .m_axis_tlast   (s_axis_c2h_tlast_2 )
 );
  
  axis_clock_converter_64b u_clk_conv_rx_reponse(
-.s_axis_aresetn (                       ),
-.m_axis_aresetn (                       ),
-.s_axis_aclk    (                       ),
+.s_axis_aresetn (aresetn                ),
+.m_axis_aresetn (pcie_user_resetn       ),
+.s_axis_aclk    (axi_clk                ),
 .s_axis_tvalid  (axis_rx_metadata_TVALID    ),
 .s_axis_tready  (axis_rx_metadata_TREADY    ),
 .s_axis_tdata   ({48'b0,axis_rx_metadata_TDATA } ),
-.s_axis_tlast   (1'b1     ),
-.m_axis_aclk    (                       ),
+.s_axis_tkeep   (8'hff                      ),
+.s_axis_tlast   (1'b1                       ),
+.m_axis_aclk    (pcie_user_clk      ),
 .m_axis_tvalid  (s_axis_c2h_tvalid_3),       
 .m_axis_tready  (s_axis_c2h_tready_3),       
 .m_axis_tdata   (s_axis_c2h_tdata_3 ),
+.m_axis_tkeep   (                   ),
 .m_axis_tlast   (s_axis_c2h_tlast_3 )
 );
   
@@ -1391,18 +1413,14 @@ axis_clock_converter_64b u_clk_conv_rx_notify(
      .usr_irq_req       (0),
      .usr_irq_ack       (),
      //-- AXI Global
-      .axi_aclk        ( user_clk ),
-      .axi_aresetn     ( user_resetn ),
-      .user_lnk_up     ( user_lnk_up )
+      .axi_aclk        ( pcie_user_clk ),
+      .axi_aresetn     ( pcie_user_resetn ),
+      .user_lnk_up     ( pcie_user_lnk_up )
      );
 
 
 
-
-
-
-
-
+assign led = {pcie_user_lnk_up,1'b0,led_reg[5:0]};
 
 endmodule
 
