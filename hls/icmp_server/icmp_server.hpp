@@ -41,6 +41,7 @@ using namespace hls;
 const uint8_t ECHO_REQUEST = 0x08;
 const uint8_t ECHO_REPLY = 0x00;
 const uint8_t ICMP_PROTOCOL = 0x01;
+const uint8_t ICMP_MAX_TTL = 0x40;
 
 struct axiWord {
 	ap_uint<64>		data;

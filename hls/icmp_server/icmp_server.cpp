@@ -115,7 +115,8 @@ void check_icmp_checksum(	stream<axiWord>& dataIn,
 			break;
 		case WORD_2:
 			// Contains Dest IP address
-			sendWord.data(31, 0) = cics_prevWord.data(31, 0);
+			sendWord.data(7, 0) = ICMP_MAX_TTL;    //TTL
+			sendWord.data(31, 8) = cics_prevWord.data(31, 8);
 			sendWord.data(63, 32) = currWord.data(31, 0);
 			icmpType = currWord.data(39, 32);
 			icmpCode = currWord.data(47, 40);
@@ -262,7 +263,7 @@ void udpAddIpHeader(stream<axiWord> &udpPort2addIpHeader_data, stream<ap_uint<64
 		case AIP_IP:
 			if (!udpPort2addIpHeader_header.empty() && !addIpHeader2insertChecksum.full()) { // If there are data in the queue, don't read them in but start assembling the ICMP header
 				tempWord.data 	= udpPort2addIpHeader_header.read();
-				tempWord.data.range(7, 0) = 0x80;								// Set the TTL to 128
+				tempWord.data.range(7, 0) = ICMP_MAX_TTL;   //0x80;								// Set the TTL to 128
 				tempWord.data.range(15, 8) = 0x01;								// Swap the protocol from whatever it was to ICMP
 				sourceIP		= tempWord.data.range(63, 32);
 				tempWord.data.range(63, 32)	=	0x01010101;
@@ -438,7 +439,7 @@ void icmp_server(stream<axiWord>&	dataIn,
 	static stream<ap_uint<16> > checksumStreams[2];
 	#pragma HLS STREAM variable=checksumStreams depth=16
 
-	#pragma HLS stream 		variable=packageBuffer1 			depth=512
+	#pragma HLS stream 		variable=packageBuffer1 			depth=64 //TODO change this one is crucial
 	#pragma HLS stream 		variable=udpPort2insertChecksum 	depth=8
 	#pragma HLS stream 		variable=udpPort2addIpHeader_data 	depth=192
 	#pragma HLS stream 		variable=validFifo 					depth=8
