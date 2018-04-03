@@ -24,9 +24,12 @@
 module network_stack (
     input wire           aclk,
     input wire           aresetn,
-    input wire[47:0]	    myMacAddress,
+    input wire[47:0]	  myMacAddress,
     input wire[31:0]     inputIpAddress,
+    input wire[31:0]     myDefaultGateway,
+    input wire[31:0]     mySubNetMask,
     input wire           dhcpEnable,
+    input wire [5:0]     TcpMaxDupAcks,
     output wire[31:0]    ipAddressOut,
     output wire[15:0]    regSessionCount,
     output wire[15:0]    relSessionCount,
@@ -545,6 +548,7 @@ toe_ip toe_inst (
 //.metadataHandlerFifo_write(metadataHandlerFifo_write),
 ////////////////////
 .myIpAddress_V(inputIpAddress),                                      // input wire [31 : 0] regIpAddress_V
+.TcpMaxDupAcks(TcpMaxDupAcks),
 //.relSessionCount_V(relSessionCount),                              // output wire [15 : 0] relSessionCount_V
 .regSessionCount_V(regSessionCount),                              // output wire [15 : 0] regSessionCount_V
 .aclk(aclk),                                                        // input aclk
@@ -698,8 +702,8 @@ mac_ip_encode_ip mac_ip_encode_inst (
 .s_axis_arp_lookup_reply_TDATA(axis_arp_lookup_reply_TDATA),
 
 .myMacAddress_V(myMacAddress),                                    // input wire [47 : 0] regMacAddress_V
-.regSubNetMask_V(32'h00FFFFFF),                                    // input wire [31 : 0] regSubNetMask_V
-.regDefaultGateway_V(32'h01D4010A ), //0102A8C0),                            // input wire [31 : 0] regDefaultGateway_V
+.regSubNetMask_V(mySubNetMask),                                    // input wire [31 : 0] regSubNetMask_V
+.regDefaultGateway_V(myDefaultGateway ), //0102A8C0),                            // input wire [31 : 0] regDefaultGateway_V
   
 .aclk(aclk), // input aclk
 .aresetn(aresetn) // input aresetn

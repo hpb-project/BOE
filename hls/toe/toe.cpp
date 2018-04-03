@@ -539,6 +539,7 @@ void toe(	// Data & Memory Interface
 
 			//IP Address Input
 			ap_uint<32>								myIpAddress,
+			ap_uint<6>		                        TcpMaxDupAcks,
 			//statistic
 			ap_uint<16>&							regSessionCount)
 {
@@ -877,8 +878,8 @@ void toe(	// Data & Memory Interface
 #if !(RX_DDR_BYPASS)
 				rxBufferWriteCmd,
 #endif
-				rxEng2rxApp_notification
-				);
+				rxEng2rxApp_notification,
+				TcpMaxDupAcks				);
 	// TX Engine
 	tx_engine(	eventEng2txEng_event,
 				rxSar2txEng_rsp,

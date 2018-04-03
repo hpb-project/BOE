@@ -710,7 +710,8 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 #if !(RX_DDR_BYPASS)
 						stream<mmCmd>&							rxBufferWriteCmd,
 #endif
-						stream<appNotification>&				rxEng2rxApp_notification)
+						stream<appNotification>&				rxEng2rxApp_notification,
+						ap_uint<6>		                        TcpMaxDupAcks)
 {
 #pragma HLS INLINE off
 #pragma HLS pipeline II=1
@@ -831,7 +832,9 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 						// Sent ACK
 						//rxEng2eventEng_setEvent.write(event(ACK, fsm_meta.sessionID));
 					}
-					if (txSar.count == 3)
+
+//					if (txSar.count == 3)
+					if (txSar.count == TcpMaxDupAcks)
 					{
 						rxEng2eventEng_setEvent.write(event(RT, fsm_meta.sessionID));
 					}
@@ -1410,7 +1413,8 @@ void rx_engine(	stream<axiWord>&					ipRxData,
 #if !(RX_DDR_BYPASS)
 				stream<mmCmd>&						rxBufferWriteCmd,
 #endif
-				stream<appNotification>&			rxEng2rxApp_notification)
+				stream<appNotification>&			rxEng2rxApp_notification,
+				ap_uint<6>		                    TcpMaxDupAcks)
 {
 //#pragma HLS DATAFLOW
 //#pragma HLS INTERFACE ap_ctrl_none port=return
@@ -1504,7 +1508,8 @@ void rx_engine(	stream<axiWord>&					ipRxData,
 							rxEng_fsmDropFifo,
 #if !(RX_DDR_BYPASS)
 							rxTcpFsm2wrAccessBreakdown,
-							rx_internalNotificationFifo);
+							rx_internalNotificationFifo,
+							TcpMaxDupAcks);
 #else
 							rxEng2rxApp_notification);
 #endif

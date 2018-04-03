@@ -89,4 +89,5 @@ void rx_engine(	stream<axiWord>&					ipRxData,
 #if !(RX_DDR_BYPASS)
 				stream<mmCmd>&						rxBufferWriteCmd,
 #endif
-				stream<appNotification>&			rxEng2rxApp_notification);
+				stream<appNotification>&			rxEng2rxApp_notification,
+				ap_uint<6>		                    TcpMaxDupAcks);

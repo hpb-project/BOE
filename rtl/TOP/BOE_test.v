@@ -255,13 +255,22 @@ wire[15:0]  relSessionCount;
 
 wire [47:0] myMac;
 wire [31:0] myIP;
+wire [31:0] myDefaultGateway;
+wire [31:0] mySubNetMask;
 wire [47:0] myMac_to_network_stack;
 wire [31:0] myIP_to_network_stack;
+wire [31:0] myDefaultGateway_to_network_stack;
+wire [31:0] mySubNetMask_to_network_stack;
 
 assign myMac=48'h002233445566;  //h000A35029DE5;  //;
-assign myIP=32'h0A01D4D1; //c0a80205;
+assign myIP=32'hc0a80205; //; h0A01D4D1
+assign myDefaultGateway=32'hc0a80201; //; h0A01D401
+assign mySubNetMask=32'hFFFFFF00;
+
 assign myMac_to_network_stack = {myMac[7:0],myMac[15:8],myMac[23:16],myMac[31:24],myMac[39:32],myMac[47:40]};
 assign myIP_to_network_stack  = {myIP[7:0],myIP[15:8],myIP[23:16],myIP[31:24]};
+assign myDefaultGateway_to_network_stack  = {myDefaultGateway[7:0],myDefaultGateway[15:8],myDefaultGateway[23:16],myDefaultGateway[31:24]};
+assign mySubNetMask_to_network_stack  = {mySubNetMask[7:0],mySubNetMask[15:8],mySubNetMask[23:16],mySubNetMask[31:24]};
 
 always @(posedge axi_clk) begin
     button_east_reg <= button_east;
@@ -372,7 +381,10 @@ network_stack network_stack_inst(
 .aresetn                        (aresetn),
 .myMacAddress			        (myMac_to_network_stack),
 .inputIpAddress                 (myIP_to_network_stack),
+.myDefaultGateway               (myDefaultGateway_to_network_stack),
+.mySubNetMask                   (mySubNetMask_to_network_stack),
 .dhcpEnable                     (1'b0),
+.TcpMaxDupAcks                (6'b000011),
 .ipAddressOut                   (ipAddressOut),
 .regSessionCount                (regSessionCount),
 .relSessionCount                (relSessionCount),
