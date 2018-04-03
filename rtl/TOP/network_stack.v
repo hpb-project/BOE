@@ -548,7 +548,7 @@ toe_ip toe_inst (
 //.metadataHandlerFifo_write(metadataHandlerFifo_write),
 ////////////////////
 .myIpAddress_V(inputIpAddress),                                      // input wire [31 : 0] regIpAddress_V
-.TcpMaxDupAcks(TcpMaxDupAcks),
+.TcpMaxDupAcks_V(TcpMaxDupAcks),
 //.relSessionCount_V(relSessionCount),                              // output wire [15 : 0] relSessionCount_V
 .regSessionCount_V(regSessionCount),                              // output wire [15 : 0] regSessionCount_V
 .aclk(aclk),                                                        // input aclk
