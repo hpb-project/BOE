@@ -778,7 +778,13 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 					if (fsm_meta.meta.ackNumb == txSar.prevAck && txSar.prevAck != txSar.nextByte)
 					{
 						// Not new ACK increase counter
+						if (fsm_meta.meta.length == 0)
+						{
+							if (txSar.count<=TcpMaxDupAcks)
+							{
 						txSar.count++;
+					}
+						}
 					}
 					else
 					{
