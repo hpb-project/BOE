@@ -588,7 +588,8 @@ int main(int argc, char *argv[]) {
 	stream<appReadRequest>				rxDataReq("rxDataReq");
 	stream<ipTuple>						openConnReq("openConnReq");
 	stream<ap_uint<16> >				closeConnReq("closeConnReq");
-	stream<ap_uint<16> >				txDataReqMeta("txDataReqMeta");
+//	stream<ap_uint<16> >				txDataReqMeta("txDataReqMeta");
+	stream<appTxMeta>				txDataReqMeta("txDataReqMeta");
 	stream<axiWord>						txDataReq("txDataReq");
 	stream<bool>						listenPortRsp("listenPortRsp");
 	stream<appNotification>				notification("notification");
@@ -810,7 +811,8 @@ int main(int argc, char *argv[]) {
 			sessionLookup_req, sessionUpdate_req, listenPortReq, rxDataReq, openConnReq, closeConnReq, txDataReqMeta, txDataReq,
 			//listenPortRsp, notification, rxDataRspMeta, rxDataRsp, openConnRsp, txDataRsp);
 			//relSessionCount, regSessionCount);
-			listenPortRsp, notification, rxDataRspMeta, rxDataRsp, openConnRsp, txDataRsp, 0x01010101, relSessionCount, regSessionCount);
+//			listenPortRsp, notification, rxDataRspMeta, rxDataRsp, openConnRsp, txDataRsp, 0x01010101, relSessionCount, regSessionCount);
+	    	listenPortRsp, notification, rxDataRspMeta, rxDataRsp, openConnRsp, txDataRsp, 0x01010101, regSessionCount);
 
 		iperf(listenPortReq, listenPortRsp, notification, rxDataReq,
 			  rxDataRspMeta, rxDataRsp, rxDataOut, openConnReq, openConnRsp,
