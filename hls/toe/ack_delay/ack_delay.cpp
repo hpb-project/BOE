@@ -50,9 +50,12 @@ void ack_delay(	stream<extendedEvent>&	input,
 		input.read(ev);
 		readCountFifo.write(1);
 		// Check if there is a delayed ACK
-		if (ev.type == ACK && ack_table[ev.sessionID] == 0)
+		if (ev.type == ACK )
 		{
-			ack_table[ev.sessionID] = TIME_64us;
+			if (ack_table[ev.sessionID] == 0)
+			{
+				ack_table[ev.sessionID] = TIME_64us;
+			}
 		}
 		else
 		{
