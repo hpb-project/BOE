@@ -722,6 +722,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 
 	static rxFsmMetaData fsm_meta;
 	static bool fsm_txSarRequest = false;
+	static bool SendAckNoDelay = false;
 
 
 	ap_uint<4> control_bits = 0;
@@ -774,6 +775,8 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 				rxEng2timer_clearRetransmitTimer.write(rxRetransmitTimerUpdate(fsm_meta.sessionID, (fsm_meta.meta.ackNumb == txSar.nextByte)));
 				if (tcpState == ESTABLISHED || tcpState == SYN_RECEIVED || tcpState == FIN_WAIT_1 || tcpState == CLOSING || tcpState == LAST_ACK)
 				{
+					SendAckNoDelay = false;
+
 					// Check if new ACK arrived
 					if (fsm_meta.meta.ackNumb == txSar.prevAck && txSar.prevAck != txSar.nextByte)
 					{
@@ -833,6 +836,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 						else
 						{
 							dropDataFifoOut.write(true);
+							SendAckNoDelay = true;
 						}
 
 						// Sent ACK
@@ -840,14 +844,25 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 					}
 
 //					if (txSar.count == 3)
-					if (txSar.count == TcpMaxDupAcks)
+					if (txSar.count == TcpMaxDupAcks && SendAckNoDelay==true)
+					{
+						rxEng2eventEng_setEvent.write(event(ACK_NODELAY, fsm_meta.sessionID));
+						rxEng2eventEng_setEvent.write(event(RT, fsm_meta.sessionID));
+					}
+					else if (txSar.count == TcpMaxDupAcks && SendAckNoDelay==false)
 					{
 						rxEng2eventEng_setEvent.write(event(RT, fsm_meta.sessionID));
+					}
+					else if (txSar.count != TcpMaxDupAcks && SendAckNoDelay==true)
+					{
+						rxEng2eventEng_setEvent.write(event(ACK_NODELAY, fsm_meta.sessionID));
 					}
 					else if (fsm_meta.meta.length != 0)
 					{
 						rxEng2eventEng_setEvent.write(event(ACK, fsm_meta.sessionID));
 					}
+
+					SendAckNoDelay = false;
 
 
 					// Reset Retransmit Timer
