@@ -38,7 +38,7 @@ void appMuxRxPath(stream<axiWord> 			&rxDataIn, stream<metadata>&     	rxMetadat
 	switch(shimState) {
 		case LB_IDLE:
 		{
-			if (!rxMetadataIn.empty() && !rxMetadataOutDhcp.full()) {
+			if (!rxMetadataIn.empty() && !rxMetadataOutDhcp.full() && !rxMetadataOutApp.full()) {
 				metadata tempMetadata = rxMetadataIn.read();
 				if (tempMetadata.destinationSocket.port == 0x0044) {
 					rxMetadataOutDhcp.write(tempMetadata);

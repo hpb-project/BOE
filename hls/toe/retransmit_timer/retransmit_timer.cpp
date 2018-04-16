@@ -159,7 +159,7 @@ void retransmit_timer(	stream<rxRetransmitTimerUpdate>&	rxEng2timer_clearRetrans
 				}
 				// We need to check if we can generate another event, otherwise we might end up in a Deadlock,
 				// since the TX Engine will not be able to set new retransmit timers
-				else if (!rtTimer2eventEng_setEvent.full())
+				else if (!rtTimer2eventEng_setEvent.full() && !rtTimer2stateTable_releaseState.full() && !rtTimer2txApp_notification.full() && !rtTimer2rxApp_notification.full())
 				{
 					currEntry.time = 0;
 					currEntry.active = false;

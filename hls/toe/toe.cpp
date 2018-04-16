@@ -128,12 +128,12 @@ void timerCloseMerger(stream<ap_uint<16> >& in1, stream<ap_uint<16> >& in2, stre
 
 	ap_uint<16> sessionID;
 
-	if (!in1.empty())
+	if (!in1.empty() && !out.full())
 	{
 		in1.read(sessionID);
 		out.write(sessionID);
 	}
-	else if (!in2.empty())
+	else if (!in2.empty() && !out.full())
 	{
 		in2.read(sessionID);
 		out.write(sessionID);
@@ -149,11 +149,11 @@ void stream_merger(stream<T>& in1, stream<T>& in2, stream<T>& out)
 #pragma HLS PIPELINE II=1
 
 
-	if (!in1.empty())
+	if (!in1.empty() && !out.full())
 	{
 		out.write(in1.read());
 	}
-	else if (!in2.empty())
+	else if (!in2.empty() && !out.full())
 	{
 		out.write(in2.read());
 	}
@@ -219,7 +219,7 @@ void rxAppMemAccessBreakdown(stream<mmCmd> &inputMemAccess, stream<mmCmd> &outpu
 	static ap_uint<16> rxAppAccLength = 0;
 
 	if (rxAppBreakdown == false) {
-		if (!inputMemAccess.empty() && !outputMemAccess.full()) {
+		if (!inputMemAccess.empty() && !outputMemAccess.full() && !rxAppDoubleAccess.full()) {
 			rxAppTempCmd = inputMemAccess.read();
 			if ((rxAppTempCmd.saddr.range(15, 0) + rxAppTempCmd.bbt) > 65536) {
 				rxAppAccLength = 65536 - rxAppTempCmd.saddr;

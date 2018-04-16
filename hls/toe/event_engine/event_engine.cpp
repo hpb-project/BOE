@@ -82,13 +82,13 @@ void event_engine(	stream<event>&				txApp2eventEng_setEvent,
 		else if (ee_writeCounter == ee_adReadCounter && ee_adWriteCounter == ee_txEngReadCounter)
 		{
 			// rtTimer and probeTimer events have priority
-			if (!timer2eventEng_setEvent.empty())
+			if (!timer2eventEng_setEvent.empty() && !eventEng2txEng_event.full())
 			{
 				timer2eventEng_setEvent.read(ev);
 				eventEng2txEng_event.write(ev);
 				ee_writeCounter++;
 			}
-			else if (!txApp2eventEng_setEvent.empty())
+			else if (!txApp2eventEng_setEvent.empty()  && !eventEng2txEng_event.full())
 			{
 				txApp2eventEng_setEvent.read(ev);
 				eventEng2txEng_event.write(ev);

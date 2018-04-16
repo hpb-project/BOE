@@ -83,7 +83,7 @@ void tasi_metaLoader(	stream<appTxMeta>&			appTxDataReqMetaData,
 	switch(tai_state)
 	{
 	case READ_REQUEST:
-		if (!appTxDataReqMetaData.empty())
+		if (!appTxDataReqMetaData.empty() && !txApp2stateTable_req.full() && !txApp2txSar_upd_req.full())
 		{
 			// Read sessionID
 			appTxDataReqMetaData.read(tasi_writeMeta);
@@ -95,7 +95,8 @@ void tasi_metaLoader(	stream<appTxMeta>&			appTxDataReqMetaData,
 		}
 		break;
 	case READ_META:
-		if (!txSar2txApp_upd_rsp.empty() && !stateTable2txApp_rsp.empty())
+		if (!txSar2txApp_upd_rsp.empty() && !stateTable2txApp_rsp.empty()
+				&& !tasi_writeToBufFifo.full() && !appTxDataRsp.full() && !txApp2txSar_upd_req.full())
 		{
 			stateTable2txApp_rsp.read(state);
 			txSar2txApp_upd_rsp.read(tasi_writeSar);
@@ -189,7 +190,7 @@ void tasi_pkg_pusher(	stream<axiWord>& 				tasi_pkgBuffer,
 		}
 		break;
 	case 1:
-		if (!tasi_pkgBuffer.empty()) {
+		if (!tasi_pkgBuffer.empty() && !txBufferWriteData.full()) {
 			tasi_pkgBuffer.read(pushWord);
 #if (TCP_NODELAY)
 			txApp2txEng_data_stream.write(pushWord);

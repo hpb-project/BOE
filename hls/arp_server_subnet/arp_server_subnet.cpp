@@ -47,7 +47,7 @@ void arp_pkg_receiver(stream<axiWord>&        arpDataIn,
   axiWord currWord;
 
   currWord.last = 0; //probably not necessary
-  if (!arpDataIn.empty())
+  if (!arpDataIn.empty() && !arpReplyMetaFifo.full() && !arpTableInsertFifo.full())
 	{
 		arpDataIn.read(currWord);
 
@@ -144,6 +144,8 @@ void arp_pkg_sender(stream<arpReplyMeta>&     arpReplyMetaFifo,
     }
     break;
   case ARP_SENTRQ:
+	  if(!arpDataOut.full())
+	  {
 		switch(sendCount)
 		{
 			case 0:
@@ -190,8 +192,11 @@ void arp_pkg_sender(stream<arpReplyMeta>&     arpReplyMetaFifo,
 		} //switch sendcount
 		arpDataOut.write(sendWord);
 		sendCount++;
+	  }
 		break;
   case ARP_REPLY:
+	  if(!arpDataOut.full())
+	  {
 		  switch(sendCount)
 			{
 			case 0:
@@ -238,6 +243,7 @@ void arp_pkg_sender(stream<arpReplyMeta>&     arpReplyMetaFifo,
 			} //switch
 			arpDataOut.write(sendWord);
 			sendCount++;
+	  }
 			break;
   } //switch
 }
@@ -265,7 +271,7 @@ void arp_table( stream<arpTableEntry>&    	arpTableInsertFifo,
 		arpTableInsertFifo.read(currEntry);
 		arpTable[currEntry.ipAddress(31,24)] = currEntry;
 	}
-	else if (!macIpEncode_req.empty())
+	else if (!macIpEncode_req.empty() && !arpRequestMetaFifo.full() && !macIpEncode_rsp.full())
 	{
 		macIpEncode_req.read(query_ip);
 		currEntry = arpTable[query_ip(31,24)];

@@ -45,12 +45,12 @@ void sessionIdManager(	stream<ap_uint<14> >&		new_id,
 	static ap_uint<14> counter = 0;
 	ap_uint<14> sessionID;
 
-	if (!fin_id.empty())
+	if (!fin_id.empty() && !new_id.full())
 	{
 		fin_id.read(sessionID);
 		new_id.write(sessionID);
 	}
-	else if (counter < MAX_SESSIONS)
+	else if ((counter < MAX_SESSIONS) && !new_id.full())
 	{
 		new_id.write(counter);
 		counter++;
@@ -111,7 +111,7 @@ void lookupReplyHandler(stream<rtlSessionLookupReply>&			sessionLookup_rsp,
 	switch (slc_fsmState)
 	{
 	case LUP_REQ:
-		if (!txApp2sLookup_req.empty())
+		if (!txApp2sLookup_req.empty() && !sessionLookup_req.full() && !slc_queryCache.full())
 		{
 			txApp2sLookup_req.read(toeTuple);
 			intQuery.tuple.theirIp = toeTuple.dstIp;
@@ -124,7 +124,7 @@ void lookupReplyHandler(stream<rtlSessionLookupReply>&			sessionLookup_rsp,
 			slc_queryCache.write(intQuery);
 			slc_fsmState = LUP_RSP;
 		}
-		else if (!rxEng2sLooup_req.empty())
+		else if (!rxEng2sLooup_req.empty() && !sessionLookup_req.full() && !slc_queryCache.full())
 		{
 			rxEng2sLooup_req.read(query);
 			intQuery.tuple.theirIp = query.tuple.srcIp;
@@ -139,7 +139,8 @@ void lookupReplyHandler(stream<rtlSessionLookupReply>&			sessionLookup_rsp,
 		}
 		break;
 	case LUP_RSP:
-		if(!sessionLookup_rsp.empty() && !slc_queryCache.empty())
+		if(!sessionLookup_rsp.empty() && !slc_queryCache.empty()
+				&& !sessionInsert_req.full() && !slc_insertTuples.full() && !sLookup2rxEng_rsp.full() && !sLookup2txApp_rsp.full() )
 		{
 			sessionLookup_rsp.read(lupReply);
 			slc_queryCache.read(intQuery);
@@ -167,7 +168,8 @@ void lookupReplyHandler(stream<rtlSessionLookupReply>&			sessionLookup_rsp,
 	//case UPD_REQ:
 		//break;
 	case UPD_RSP:
-		if (!sessionInsert_rsp.empty() && !slc_insertTuples.empty())
+		if (!sessionInsert_rsp.empty() && !slc_insertTuples.empty()
+				&& !sLookup2rxEng_rsp.full() && !sLookup2txApp_rsp.full() && !reverseTableInsertFifo.full())
 		{
 			sessionInsert_rsp.read(insertReply);
 			slc_insertTuples.read(tuple);
@@ -199,13 +201,13 @@ void updateRequestSender(stream<rtlSessionUpdateRequest>&		sessionInsert_req,
 	static ap_uint<16> usedSessionIDs = 0;
 	rtlSessionUpdateRequest request;
 
-	if (!sessionInsert_req.empty())
+	if (!sessionInsert_req.empty() && !sessionUpdate_req.full())
 	{
 		sessionUpdate_req.write(sessionInsert_req.read());
 		usedSessionIDs++;
 		regSessionCount = usedSessionIDs;
 	}
-	else if (!sessionDelete_req.empty())
+	else if (!sessionDelete_req.empty() && !sessionUpdate_req.full() && !sessionIdFinFifo.full())
 	{
 		sessionDelete_req.read(request);
 		sessionUpdate_req.write(request);
@@ -226,7 +228,7 @@ void updateReplyHandler(	stream<rtlSessionUpdateReply>&			sessionUpdate_rsp,
 	rtlSessionUpdateReply upReply;
 	fourTupleInternal tuple;
 
-	if (!sessionUpdate_rsp.empty())
+	if (!sessionUpdate_rsp.empty() && !sessionInsert_rsp.full())
 	{
 		sessionUpdate_rsp.read(upReply);
 		if (upReply.op == INSERT)
@@ -269,7 +271,7 @@ void reverseLookupTableInterface(	stream<revLupInsert>& revTableInserts,
 
 	}
 	// TODO check if else if necessary
-	else if (!stateTable2sLookup_releaseSession.empty())
+	else if (!stateTable2sLookup_releaseSession.empty() && !sLookup2portTable_releasePort.full() && !deleteCache.full())
 	{
 		stateTable2sLookup_releaseSession.read(sessionID);
 		releaseTuple = reverseLookupTable[sessionID];
@@ -280,7 +282,7 @@ void reverseLookupTableInterface(	stream<revLupInsert>& revTableInserts,
 		}
 		tupleValid[sessionID] = false;
 	}
-	else if (!txEng2sLookup_rev_req.empty())
+	else if (!txEng2sLookup_rev_req.empty() && !sLookup2txEng_rev_rsp.full())
 	{
 		txEng2sLookup_rev_req.read(sessionID);
 		toeTuple.srcIp = reverseLookupTable[sessionID].myIp;

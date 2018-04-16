@@ -45,7 +45,7 @@ void ack_delay(	stream<extendedEvent>&	input,
 	//static ap_uint<4>	ad_readCounter = 0;
 	extendedEvent ev;
 
-	if (!input.empty())
+	if (!input.empty() && !output.full() && !readCountFifo.full())
 	{
 		input.read(ev);
 		readCountFifo.write(1);
@@ -67,15 +67,16 @@ void ack_delay(	stream<extendedEvent>&	input,
 	}
 	else
 	{
-		if (ack_table[ad_pointer] > 0 && !output.full())
+		if (ack_table[ad_pointer] > 1  )
 		{
-			if (ack_table[ad_pointer] == 1)
+			// Decrease value
+			ack_table[ad_pointer] -= 1;
+		}
+		else if (ack_table[ad_pointer] == 1 && !output.full() && !writeCountFifo.full())
 			{
 				output.write(event(ACK, ad_pointer));
 				writeCountFifo.write(1);
-			}
-			// Decrease value
-			ack_table[ad_pointer] -= 1;
+			ack_table[ad_pointer] = 0;
 		}
 		ad_pointer++;
 		if (ad_pointer == MAX_SESSIONS)

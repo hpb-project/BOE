@@ -56,7 +56,7 @@ void listening_port_table(	stream<ap_uint<16> >&	rxApp2portTable_listen_req,
 
 	ap_uint<16> currPort;
 
-	if (!rxApp2portTable_listen_req.empty()) //check range, TODO make sure currPort is not equal in 2 consecutive cycles
+	if (!rxApp2portTable_listen_req.empty() && !portTable2rxApp_listen_rsp.full()) //check range, TODO make sure currPort is not equal in 2 consecutive cycles
 	{
 		rxApp2portTable_listen_req.read(currPort);
 		if (!listeningPortTable[currPort(14, 0)] && currPort < 32768)
@@ -69,7 +69,7 @@ void listening_port_table(	stream<ap_uint<16> >&	rxApp2portTable_listen_req,
 			portTable2rxApp_listen_rsp.write(false);
 		}
 	}
-	else if (!pt_portCheckListening_req_fifo.empty())
+	else if (!pt_portCheckListening_req_fifo.empty() && !pt_portCheckListening_rsp_fifo.full())
 	{
 		//pt_portCheckListening_req_fifo.read(checkPort15);
 		//pt_portCheckListening_rsp_fifo.write(listeningPortTable[checkPort15]);
@@ -118,7 +118,7 @@ void free_port_table(	stream<ap_uint<16> >&	sLookup2portTable_releasePort,
 			freePortTable[currPort(14, 0)] = false; //shift
 		}
 	}
-	else if (!pt_portCheckUsed_req_fifo.empty())
+	else if (!pt_portCheckUsed_req_fifo.empty() && !pt_portCheckUsed_rsp_fifo.full())
 	{
 		pt_portCheckUsed_rsp_fifo.write(freePortTable[pt_portCheckUsed_req_fifo.read()]);
 	}
@@ -156,7 +156,7 @@ void check_in_multiplexer(	stream<ap_uint<16> >&		rxEng2portTable_check_req,
 	ap_uint<16>			swappedCheckPort;
 
 	// Forward request according to port number, store table to keep order
-	if (!rxEng2portTable_check_req.empty())
+	if (!rxEng2portTable_check_req.empty() && !pt_portCheckListening_req_fifo.full() && !pt_portCheckUsed_req_fifo.full() && !pt_dstFifoOut.full())
 	{
 		rxEng2portTable_check_req.read(checkPort);
 		swappedCheckPort(7, 0) = checkPort(15, 8);
@@ -214,14 +214,14 @@ void check_out_multiplexer(	stream<bool>&				pt_dstFifoIn,
 		}
 		break;
 	case 1:
-		if (!pt_portCheckListening_rsp_fifo.empty())
+		if (!pt_portCheckListening_rsp_fifo.empty() && !portTable2rxEng_check_rsp.full())
 		{
 			portTable2rxEng_check_rsp.write(pt_portCheckListening_rsp_fifo.read());
 			cm_fsmState = READ_DST;
 		}
 		break;
 	case 2:
-		if (!pt_portCheckUsed_rsp_fifo.empty())
+		if (!pt_portCheckUsed_rsp_fifo.empty() && !portTable2rxEng_check_rsp.full())
 		{
 			portTable2rxEng_check_rsp.write(pt_portCheckUsed_rsp_fifo.read());
 			cm_fsmState = READ_DST;

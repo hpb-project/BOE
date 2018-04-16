@@ -93,7 +93,7 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 	switch (ml_FsmState)
 	{
 	case 0:
-		if (!eventEng2txEng_event.empty())
+		if (!eventEng2txEng_event.empty() && !txEng2rxSar_req.full() && !txEng2txSar_upd_req.full() && !readCountFifo.full())
 		{
 			eventEng2txEng_event.read(ml_curEvent);
 			readCountFifo.write(1);
@@ -219,7 +219,10 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 #else
 		case TX:
 			// Sends everyting between txSar.not_ackd and txSar.app
-			if ((!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()) || ml_sarLoaded)
+
+			if (((!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()) || ml_sarLoaded)
+					&& !txEng2timer_setProbeTimer.full() && !txEng2timer_setRetransmitTimer.full() && !txEng2txSar_upd_req.full() && !txBufferReadCmd.full()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				if (!ml_sarLoaded)
 				{
@@ -340,7 +343,9 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 			break;
 #endif
 		case RT:
-			if ((!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()) || ml_sarLoaded)
+			if (((!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()) || ml_sarLoaded)
+					&& !txEng2timer_setRetransmitTimer.full() && !txEng2txSar_upd_req.full() && !txBufferReadCmd.full()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				if (!ml_sarLoaded)
 				{
@@ -439,7 +444,8 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 			break;
 		case ACK:
 		case ACK_NODELAY:
-			if (!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty())
+			if (!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				rxSar2txEng_rsp.read(rxSar);
 				txSar2txEng_upd_rsp.read(txSar);
@@ -460,7 +466,9 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 			}
 			break;
 		case SYN:
-			if (((ml_curEvent.rt_count != 0) && !txSar2txEng_upd_rsp.empty()) || (ml_curEvent.rt_count == 0))
+			if ((((ml_curEvent.rt_count != 0) && !txSar2txEng_upd_rsp.empty()) || (ml_curEvent.rt_count == 0))
+					&& !txEng2timer_setRetransmitTimer.full() && !txEng2txSar_upd_req.full()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				if (ml_curEvent.rt_count != 0)
 				{
@@ -493,7 +501,9 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 			}
 			break;
 		case SYN_ACK:
-			if (!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty())
+			if (!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()
+					&& !txEng2timer_setRetransmitTimer.full() && !txEng2txSar_upd_req.full()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				rxSar2txEng_rsp.read(rxSar);
 				txSar2txEng_upd_rsp.read(txSar);
@@ -529,7 +539,9 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 			}
 			break;
 		case FIN:
-			if ((!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()) || ml_sarLoaded)
+			if (((!rxSar2txEng_rsp.empty() && !txSar2txEng_upd_rsp.empty()) || ml_sarLoaded)
+				&& !txEng2timer_setRetransmitTimer.full() && !txEng2txSar_upd_req.full()
+				&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				if (!ml_sarLoaded)
 				{
@@ -586,7 +598,8 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 		case RST:
 			// Assumption RST length == 0
 			resetEvent = ml_curEvent;
-			if (!resetEvent.hasSessionID())
+			if (!resetEvent.hasSessionID()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng_tupleShortCutFifoOut.full())
 			{
 				txEng_ipMetaFifoOut.write(0);
 				txEng_tcpMetaFifoOut.write(tx_engine_meta(0, resetEvent.getAckNumb(), 1, 1, 0, 0));
@@ -594,7 +607,8 @@ void metaLoader(stream<extendedEvent>&				eventEng2txEng_event,
 				txEng_tupleShortCutFifoOut.write(ml_curEvent.tuple);
 				ml_FsmState = 0;
 			}
-			else if (!txSar2txEng_upd_rsp.empty())
+			else if (!txSar2txEng_upd_rsp.empty()
+					&& !txEng_ipMetaFifoOut.full() && !txEng_tcpMetaFifoOut.full() && !txEng_isLookUpFifoOut.full() && !txEng2sLookup_rev_req.full())
 			{
 				txSar2txEng_upd_rsp.read(txSar);
 				txEng_ipMetaFifoOut.write(0);
@@ -647,14 +661,14 @@ void tupleSplitter(	stream<fourTuple>&		sLookup2txEng_rev_rsp,
 	}
 	else
 	{
-		if (!sLookup2txEng_rev_rsp.empty() && ts_isLookUp)
+		if (!sLookup2txEng_rev_rsp.empty() && !txEng_ipTupleFifoOut.full() && !txEng_tcpTupleFifoOut.full() && ts_isLookUp)
 		{
 			sLookup2txEng_rev_rsp.read(tuple);
 			txEng_ipTupleFifoOut.write(twoTuple(tuple.srcIp, tuple.dstIp));
 			txEng_tcpTupleFifoOut.write(tuple);
 			ts_getMeta = true;
 		}
-		else if(!txEng_tupleShortCutFifoIn.empty() && !ts_isLookUp)
+		else if(!txEng_tupleShortCutFifoIn.empty() && !txEng_ipTupleFifoOut.full() && !txEng_tcpTupleFifoOut.full() && !ts_isLookUp)
 		{
 			txEng_tupleShortCutFifoIn.read(tuple);
 			txEng_ipTupleFifoOut.write(twoTuple(tuple.srcIp, tuple.dstIp));
@@ -686,7 +700,7 @@ void ipHeaderConstruction(stream<ap_uint<16> >&				txEng_ipMetaDataFifoIn,
 	switch(ihc_currWord)
 	{
 	case WORD_0:
-		if (!txEng_ipMetaDataFifoIn.empty())
+		if (!txEng_ipMetaDataFifoIn.empty() && !txEng_ipHeaderBufferOut.full())
 		{
 			txEng_ipMetaDataFifoIn.read(length);
 			sendWord.data.range(7, 0) = 0x45;
@@ -704,7 +718,7 @@ void ipHeaderConstruction(stream<ap_uint<16> >&				txEng_ipMetaDataFifoIn,
 		}
 		break;
 	case WORD_1:
-		if (!txEng_ipTupleFifoIn.empty())
+		if (!txEng_ipTupleFifoIn.empty() && !txEng_ipHeaderBufferOut.full())
 		{
 			txEng_ipTupleFifoIn.read(ihc_tuple);
 			sendWord.data.range(7, 0) = 0x40;
@@ -718,11 +732,14 @@ void ipHeaderConstruction(stream<ap_uint<16> >&				txEng_ipMetaDataFifoIn,
 		}
 		break;
 	case WORD_2:
+		if (!txEng_ipHeaderBufferOut.full())
+		{
 		sendWord.data.range(31, 0) = ihc_tuple.dstIp; // dstIp
 		sendWord.keep = 0x0F;
 		sendWord.last = 1;
 		txEng_ipHeaderBufferOut.write(sendWord);
 		ihc_currWord = 0;
+		}
 		break;
 	} //switch
 }
@@ -764,7 +781,7 @@ void pseudoHeaderConstruction(stream<tx_engine_meta>&		tcpMetaDataFifoIn,
 		switch(phc_currWord)
 		{
 		case WORD_0:
-			if (!tcpTupleFifoIn.empty() && !tcpMetaDataFifoIn.empty())
+			if (!tcpTupleFifoIn.empty() && !tcpMetaDataFifoIn.empty() && !dataOut.full())
 			{
 				tcpTupleFifoIn.read(phc_tuple);
 				tcpMetaDataFifoIn.read(phc_meta);
@@ -777,6 +794,8 @@ void pseudoHeaderConstruction(stream<tx_engine_meta>&		tcpMetaDataFifoIn,
 			}
 			break;
 		case WORD_1:
+			if (!dataOut.full())
+			{
 			sendWord.data.range(7, 0) = 0x00;
 			sendWord.data.range(15, 8) = 0x06; // TCP
 			length = phc_meta.length + 0x14;  // 20 bytes for the header
@@ -788,8 +807,11 @@ void pseudoHeaderConstruction(stream<tx_engine_meta>&		tcpMetaDataFifoIn,
 			sendWord.last = 0;
 			dataOut.write(sendWord);
 			phc_currWord++;
+			}
 			break;
 		case WORD_2:
+			if (!dataOut.full())
+			{
 			// Insert SEQ number
 			sendWord.data(7, 0)   = phc_meta.seqNumb(31, 24);
 			sendWord.data(15, 8)  = phc_meta.seqNumb(23, 16);
@@ -804,8 +826,11 @@ void pseudoHeaderConstruction(stream<tx_engine_meta>&		tcpMetaDataFifoIn,
 			sendWord.last = 0;
 			dataOut.write(sendWord);
 			phc_currWord++;
+			}
 			break;
 		case WORD_3:
+			if (!dataOut.full())
+			{
 			sendWord.data(3,1) = 0; // reserved
 			sendWord.data(7, 4) = (0x5 + phc_meta.syn); //data offset
 			/* Control bits:
@@ -839,8 +864,11 @@ void pseudoHeaderConstruction(stream<tx_engine_meta>&		tcpMetaDataFifoIn,
 				phc_currWord++;
 			}
 			//phc_done = true;
+			}
 			break;
 		case WORD_4: // Only used for SYN and MSS negotiation
+			if (!dataOut.full())
+			{
 			sendWord.data(7, 0) = 0x02; // Option Kind
 			sendWord.data(15, 8) = 0x04; // Option length
 			sendWord.data(31, 16) = 0xB405; // 0x05B4 = 1460
@@ -849,6 +877,7 @@ void pseudoHeaderConstruction(stream<tx_engine_meta>&		tcpMetaDataFifoIn,
 			sendWord.last = 1;//(phc_meta.length == 0x04); //OR JUST SET TO 1
 			dataOut.write(sendWord);
 			phc_currWord = 0;
+			}
 			break;
 		} //switch
 	//} //else
@@ -884,7 +913,7 @@ void tcpPkgStitcher(stream<axiWord>&		txEng_tcpHeaderBufferIn,
 	switch (tps_state)
 	{
 	case 0: // Read Header
-		if (!txEng_tcpHeaderBufferIn.empty())
+		if (!txEng_tcpHeaderBufferIn.empty() && !txEng_tcpSegOut.full())
 		{
 			txEng_tcpHeaderBufferIn.read(currWord);
 			txEng_tcpSegOut.write(currWord);
@@ -915,7 +944,7 @@ void tcpPkgStitcher(stream<axiWord>&		txEng_tcpHeaderBufferIn,
 		}
 		break;
 	case 1: // Read one more word for MSS Option
-		if (!txEng_tcpHeaderBufferIn.empty())
+		if (!txEng_tcpHeaderBufferIn.empty() && !txEng_tcpSegOut.full())
 		{
 			txEng_tcpHeaderBufferIn.read(currWord);
 			txEng_tcpSegOut.write(currWord);
@@ -1052,7 +1081,7 @@ void tx_compute_tcp_subchecksums(	stream<axiWord>&			dataIn,
 
 	axiWord currWord;
 
-	if (!dataIn.empty())// && !tctc_checkChecksum)
+	if (!dataIn.empty() && !dataOut.full() && !txEng_subChecksumsFifoOut.full())// && !tctc_checkChecksum)
 	{
 		dataIn.read(currWord);
 		if (!tcts_firstWord)
@@ -1105,7 +1134,7 @@ void tx_compute_tcp_checksum(	stream<subSums>&			txEng_subChecksumsFifoIn,
 	//static ap_uint<3> tctc_cc_state = 0;
 	static subSums tctc_tcp_sums;
 
-	if (!txEng_subChecksumsFifoIn.empty())
+	if (!txEng_subChecksumsFifoIn.empty() && !txEng_tcpChecksumFifoOut.full())
 	{
 		txEng_subChecksumsFifoIn.read(tctc_tcp_sums );
 		tctc_tcp_sums.sum0 += tctc_tcp_sums.sum2;
@@ -1176,7 +1205,7 @@ void pkgStitcher(	stream<axiWord>& 		txEng_ipHeaderBufferIn,
 	{
 	case WORD_0:
 	case WORD_1:
-		if (!txEng_ipHeaderBufferIn.empty())
+		if (!txEng_ipHeaderBufferIn.empty() && !ipTxDataOut.full())
 		{
 			txEng_ipHeaderBufferIn.read(headWord);
 			sendWord = headWord;
@@ -1185,7 +1214,7 @@ void pkgStitcher(	stream<axiWord>& 		txEng_ipHeaderBufferIn,
 		}
 		break;
 	case WORD_2: //concatenate here
-		if (!txEng_ipHeaderBufferIn.empty() && !payloadIn.empty())
+		if (!txEng_ipHeaderBufferIn.empty() && !payloadIn.empty() && !ipTxDataOut.full())
 		{
 			txEng_ipHeaderBufferIn.read(headWord);
 			payloadIn.read(dataWord);
@@ -1198,7 +1227,7 @@ void pkgStitcher(	stream<axiWord>& 		txEng_ipHeaderBufferIn,
 		}
 		break;
 	case WORD_3:
-		if (!payloadIn.empty())
+		if (!payloadIn.empty() && !ipTxDataOut.full())
 		{
 			payloadIn.read(dataWord);
 			sendWord = dataWord;
@@ -1207,7 +1236,7 @@ void pkgStitcher(	stream<axiWord>& 		txEng_ipHeaderBufferIn,
 		}
 		break;
 	case WORD_4:
-		if (!payloadIn.empty() && !txEng_tcpChecksumFifoIn.empty())
+		if (!payloadIn.empty() && !txEng_tcpChecksumFifoIn.empty() && !ipTxDataOut.full())
 		{
 			payloadIn.read(dataWord);
 			txEng_tcpChecksumFifoIn.read(checksum);
@@ -1224,7 +1253,7 @@ void pkgStitcher(	stream<axiWord>& 		txEng_ipHeaderBufferIn,
 		}
 		break;
 	default:
-		if (!payloadIn.empty())
+		if (!payloadIn.empty() && !ipTxDataOut.full())
 		{
 			payloadIn.read(dataWord);
 			sendWord = dataWord;
@@ -1250,7 +1279,7 @@ void txEngMemAccessBreakdown(stream<mmCmd> &inputMemAccess, stream<mmCmd> &outpu
 	static uint16_t txPktCounter = 0;
 
 	if (txEngBreakdown == false) {
-		if (!inputMemAccess.empty() && !outputMemAccess.full()) {
+		if (!inputMemAccess.empty() && !outputMemAccess.full() && !memAccessBreakdown2txPkgStitcher.full()) {
 			txEngTempCmd = inputMemAccess.read();
 			mmCmd tempCmd = txEngTempCmd;
 			if ((txEngTempCmd.saddr.range(15, 0) + txEngTempCmd.bbt) > 65536) {

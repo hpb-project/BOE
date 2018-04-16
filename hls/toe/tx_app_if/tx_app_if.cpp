@@ -94,7 +94,7 @@ void tx_app_if(	stream<ipTuple>&				appOpenConnReq,
 	switch (tai_fsmState)
 	{
 	case IDLE:
-		if (!sLookup2txApp_rsp.empty())
+		if (!sLookup2txApp_rsp.empty() && !txApp2eventEng_setEvent.full() && !txApp2stateTable_upd_req.full() && !appOpenConnRsp.full())
 		{
 			// Read session
 			sLookup2txApp_rsp.read(session);
@@ -110,17 +110,17 @@ void tx_app_if(	stream<ipTuple>&				appOpenConnReq,
 				appOpenConnRsp.write(openStatus(0, false));
 			}
 		}
-		else if (!conEstablishedIn.empty())
+		else if (!conEstablishedIn.empty() && !appOpenConnRsp.full())
 		{
 			//Maybe check if we are actually waiting for this one
 			conEstablishedIn.read(openSessionStatus);
 			appOpenConnRsp.write(openSessionStatus);
 		}
-		else if (!rtTimer2txApp_notification.empty())
+		else if (!rtTimer2txApp_notification.empty() && !appOpenConnRsp.full())
 		{
 			appOpenConnRsp.write(rtTimer2txApp_notification.read());
 		}
-		else if(!closeConnReq.empty()) // Close Request
+		else if(!closeConnReq.empty() && !txApp2stateTable_upd_req.full()) // Close Request
 		{
 			closeConnReq.read(tai_closeSessionID);
 			txApp2stateTable_upd_req.write(stateQuery(tai_closeSessionID));
@@ -128,7 +128,7 @@ void tx_app_if(	stream<ipTuple>&				appOpenConnReq,
 		}
 		break;
 	case CLOSE_CONN:
-		if (!stateTable2txApp_upd_rsp.empty())
+		if (!stateTable2txApp_upd_rsp.empty() && !txApp2stateTable_upd_req.full() && !txApp2eventEng_setEvent.full())
 		{
 			stateTable2txApp_upd_rsp.read(state);
 			//TODO might add CLOSE_WAIT here???

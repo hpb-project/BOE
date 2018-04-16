@@ -62,7 +62,7 @@ void tx_sar_table(	stream<rxTxSarQuery>&			rxEng2txSar_upd_req,
 	txAppTxSarPush push;
 
 	// TX Engine
-	if (!txEng2txSar_upd_req.empty())
+	if (!txEng2txSar_upd_req.empty() && !txSar2txApp_ack_push.full() && !txSar2txEng_upd_rsp.full())
 	{
 		txEng2txSar_upd_req.read(tst_txEngUpdate);
 		if (tst_txEngUpdate.write)
@@ -123,7 +123,7 @@ void tx_sar_table(	stream<rxTxSarQuery>&			rxEng2txSar_upd_req,
 		tx_table[push.sessionID].app = push.app;
 	}
 	// RX Engine
-	else if (!rxEng2txSar_upd_req.empty())
+	else if (!rxEng2txSar_upd_req.empty() && !txSar2txApp_ack_push.full() && !txSar2rxEng_upd_rsp.full())
 	{
 		rxEng2txSar_upd_req.read(tst_rxEngUpdate);
 		if (tst_rxEngUpdate.write)

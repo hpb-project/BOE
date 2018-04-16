@@ -66,9 +66,12 @@ void compute_ip_checksum(stream<axiWord>&				dataIn,
 			cics_state++;
 			break;
 		case 2:
+			if (!checksumFiFoOut.full())
+			{
 			cics_ip_sums[0] = ~cics_ip_sums[0];
 			checksumFiFoOut.write(cics_ip_sums[0](15, 0));
 			cics_state++;
+			}
 			break;
 		case 3:
 			cics_ip_sums[0] = 0;
@@ -80,7 +83,7 @@ void compute_ip_checksum(stream<axiWord>&				dataIn,
 			break;
 		}
 	}
-	else if (!dataIn.empty() && cics_checksumWritten)
+	else if (!dataIn.empty() && cics_checksumWritten && !dataOut.full())
 	{
 		dataIn.read(currWord);
 		switch (cics_wordCount)
@@ -184,7 +187,7 @@ void ip_checksum_insert(stream<axiWord>&		dataIn,
 	switch (ici_wordCount)
 	{
 	case 0:
-		if (!dataIn.empty())
+		if (!dataIn.empty() && !dataOut.full())
 		{
 			dataIn.read(currWord);
 			dataOut.write(currWord);
@@ -192,7 +195,7 @@ void ip_checksum_insert(stream<axiWord>&		dataIn,
 		}
 		break;
 	case 1:
-		if (!dataIn.empty() && !checksumFifoIn.empty())
+		if (!dataIn.empty() && !checksumFifoIn.empty() && !dataOut.full())
 		{
 			dataIn.read(currWord);
 			checksumFifoIn.read(checksum);
@@ -203,7 +206,7 @@ void ip_checksum_insert(stream<axiWord>&		dataIn,
 		}
 		break;
 	default:
-		if (!dataIn.empty())
+		if (!dataIn.empty() && !dataOut.full())
 		{
 			dataIn.read(currWord);
 			dataOut.write(currWord);
@@ -233,7 +236,7 @@ void extract_ip_address(stream<axiWord>&			dataIn,
 	axiWord currWord;
 	ap_uint<32> dstIpAddress;
 
-	if (!dataIn.empty())
+	if (!dataIn.empty() && !arpTableOut.full() && !dataOut.full())
 	{
 		dataIn.read(currWord);
 		switch (eia_wordCount)
@@ -287,7 +290,7 @@ void handle_arp_reply(	stream<axiWord>&		dataIn,
 	arpTableReply reply;
 
 	currWord.last = 0;
-	if (mw_writeLast)
+	if (mw_writeLast && !dataOut.full())
 	{
 		sendWord.data(47, 0) = mw_prevWord.data(63, 16);
 		sendWord.data(63, 48) = 0;
@@ -302,7 +305,7 @@ void handle_arp_reply(	stream<axiWord>&		dataIn,
 		switch (mw_state)
 		{
 		case WAIT_LOOKUP:
-			if (!arpTableIn.empty())
+			if (!arpTableIn.empty() && !dataOut.full())
 			{
 				arpTableIn.read(reply);
 				if (reply.hit)
@@ -321,7 +324,7 @@ void handle_arp_reply(	stream<axiWord>&		dataIn,
 			}
 			break;
 		case WRITE_FIRST:
-			if (!dataIn.empty())
+			if (!dataIn.empty() && !dataOut.full())
 			{
 				dataIn.read(currWord);
 				sendWord.data.range(31, 0) = myMacAddress(47,16);
@@ -335,7 +338,7 @@ void handle_arp_reply(	stream<axiWord>&		dataIn,
 			}
 			break;
 		case WRITE:
-			if (!dataIn.empty())
+			if (!dataIn.empty() && !dataOut.full())
 			{
 				dataIn.read(currWord);
 				sendWord.data(47, 0) = mw_prevWord.data(63, 16);

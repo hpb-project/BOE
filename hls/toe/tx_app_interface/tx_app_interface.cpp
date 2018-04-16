@@ -61,11 +61,11 @@ void txEventMerger(	stream<event>&	txApp2eventEng_mergeEvent,
 
 	event ev;
 	// Merge Events
-	if (!txApp2eventEng_mergeEvent.empty())
+	if (!txApp2eventEng_mergeEvent.empty() && !out.full())
 	{
 		out.write(txApp2eventEng_mergeEvent.read());
 	}
-	else if (!txAppStream2event_mergeEvent.empty())
+	else if (!txAppStream2event_mergeEvent.empty() && !out.full())
 	{
 		txAppStream2event_mergeEvent.read(ev);
 		out.write(ev);
@@ -95,7 +95,7 @@ void txAppStatusHandler(stream<mmStatus>&				txBufferWriteStatus,
 
 	switch (tash_state) {
 	case 0:
-		if (!txBufferWriteStatus.empty() && !tasi_eventCacheFifo.empty()) {
+		if (!txBufferWriteStatus.empty() && !tasi_eventCacheFifo.empty() && !txAppStream2eventEng_setEvent.full() && !txApp2txSar_app_push.full()) {
 			//wrStatusCounter = 0;
 			txBufferWriteStatus.read(status);
 			tasi_eventCacheFifo.read(ev);
@@ -135,7 +135,7 @@ void txAppStatusHandler(stream<mmStatus>&				txBufferWriteStatus,
 		}
 		break;
 	case 1:
-		if (!txBufferWriteStatus.empty()) {
+		if (!txBufferWriteStatus.empty() && !txApp2txSar_app_push.full() && !txAppStream2eventEng_setEvent.full()) {
 			txBufferWriteStatus.read(status);
 			if (status.okay)
 			{
@@ -187,7 +187,7 @@ void tx_app_table(	stream<txSarAckPush>&		txSar2txApp_ack_push,
 			app_table[ackPush.sessionID].ackd = ackPush.ackd;
 		}
 	}
-	else if (!txApp_upd_req.empty())
+	else if (!txApp_upd_req.empty() && !txApp_upd_rsp.full())
 	{
 		txApp_upd_req.read(txAppUpdate);
 		// Write

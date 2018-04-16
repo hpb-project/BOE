@@ -46,7 +46,7 @@ void open_dhcp_port(stream<ap_uint<16> >&	openPort,
 			openPort.write(68);
 			odp_waitListenStatus = true;
 		}
-		else if (!confirmPortStatus.empty() && odp_waitListenStatus){
+		else if (!confirmPortStatus.empty() && odp_waitListenStatus && !portOpen.full()){
 			confirmPortStatus.read(odp_listenDone);
 			portOpen.write(1);
 		}
@@ -71,7 +71,7 @@ void receive_message(	stream<udpMetadata>&	dataInMeta,
 
 	axiWord currWord;
 
-	if (!dataIn.empty()) {
+	if (!dataIn.empty() && !metaOut.full()) {
 		dataIn.read(currWord);
 		//std::cout << std::hex << currWord.data << " " << currWord.last << std::endl;
 		switch (rm_wordCount) {
@@ -144,7 +144,7 @@ void send_message(	stream<dhcpRequestMeta>&	metaIn,
 	switch (sm_wordCount)
 	{
 	case 0:
-		if (!metaIn.empty())
+		if (!metaIn.empty() && !dataOut.full() && !dataOutMeta.full() && !dataOutLength.full())
 		{
 			metaIn.read(meta);
 			sendWord.data(7, 0) = 0x01; //O
@@ -160,42 +160,59 @@ void send_message(	stream<dhcpRequestMeta>&	metaIn,
 		}
 		break;
 	case 1: //secs, flags, CIADDR
+		if(!dataOut.full())
+		{
 		sendWord.data(22, 0) = 0;
 		sendWord.data[23] = 0x1; // Broadcast flag
 		sendWord.data(63, 24) = 0;
 		dataOut.write(sendWord);
 		sm_wordCount++;
+		}
 		break;
 	//case 2: //YIADDR, SIADDR
 	//case 5: //CHADDR padding + servername
 	default: //BOOTP legacy
 	//case 5:
 	//case 6:
+		if(!dataOut.full())
+		{
 		dataOut.write(sendWord);
 		sm_wordCount++;
+		}
 		break;
 	case 3:
 		// GIADDR, CHADDR
+		if(!dataOut.full())
+		{
 		sendWord.data(31, 0) = 0;
 		sendWord.data(63, 32) = myMacAddress(31, 0);
 		dataOut.write(sendWord);
 		sm_wordCount++;
+		}
 		break;
 	case 4:
+		if(!dataOut.full())
+		{
 		sendWord.data(15, 0) = myMacAddress(47, 32);
 		sendWord.data(63, 16) = 0;
 		dataOut.write(sendWord);
 		sm_wordCount++;
+		}
 		break;
 	case 29:
+		if(!dataOut.full())
+		{
 		sendWord.data(31, 0) = 0;
 		// Magic cookie
 		sendWord.data(63, 32) = MAGIC_COOKIE;
 		dataOut.write(sendWord);
 		sm_wordCount++;
+		}
 		break;
 	case 30:
 		// DHCP option 53
+		if(!dataOut.full())
+		{
 		sendWord.data(15, 0) = 0x0135;
 		sendWord.data(23, 16) = meta.type;
 		if (meta.type == DISCOVER)
@@ -213,22 +230,29 @@ void send_message(	stream<dhcpRequestMeta>&	metaIn,
 		}
 		sm_wordCount++;
 		dataOut.write(sendWord);
+		}
 		break;
 	case 31:
 		// DHCP Option 50, len 4, ip add
+		if(!dataOut.full())
+		{
 		if (meta.type == REQUEST)
 			sendWord.data(7, 0) = meta.requestedIpAddress(31, 24);
 		else
 			sendWord.data = 0;
 		sm_wordCount++;
 		dataOut.write(sendWord);
+		}
 		break;
 	case 37:
 		// Last padding word, after 64bytes
+		if(!dataOut.full())
+		{
 		sendWord.keep = 0x0f;
 		sendWord.last = 1;
 		dataOut.write(sendWord);
 		sm_wordCount = 0;
+		}
 		break;
 	}//switch
 }
@@ -265,18 +289,21 @@ void dhcp_fsm(	stream<dhcpReplyMeta>& 		replyMetaIn,
 		myIpAddress = inputIpAddress;
 		if (dhcpEnable == 1) {
 			if (time == 0) {
+				if(!requestMetaOut.full())
+				{
 				myIdentity = randomValue;
 				requestMetaOut.write(dhcpRequestMeta(randomValue, DISCOVER));
 				randomValue = (randomValue * 8) xor randomValue; // Update randomValue
 				time = TIME_5S;
 				state = SELECTING;
 			}
+			}
 			else
 				time--;
 		}
 		break;
 	case SELECTING:
-		if (!replyMetaIn.empty()) {
+		if (!replyMetaIn.empty() && !requestMetaOut.full()) {
 			replyMetaIn.read(reply);
 			if (reply.identifier == myIdentity) {
 				if (reply.type == OFFER) {

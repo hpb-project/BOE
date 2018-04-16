@@ -63,11 +63,11 @@ void check_icmp_checksum(	stream<axiWord>& dataIn,
 	axiWord sendWord;
 
 	currWord.last = 0;
-	if (cics_writeLastOne) {
+	if (cics_writeLastOne && !dataOut.full()) {
 		dataOut.write(cics_prevWord);
 		cics_writeLastOne = false;
 	}
-	else if (cics_computeCs) {
+	else if (cics_computeCs && !ValidFifoOut.full() && !checksumFifoOut.full()) {
 		switch (cics_state) {
 		case 0:
 			cics_sums[0] += cics_sums[2];
@@ -99,7 +99,7 @@ void check_icmp_checksum(	stream<axiWord>& dataIn,
 		}
 		cics_state++;
 	}
-	else if (!dataIn.empty()) {
+	else if (!dataIn.empty() && !dataOut.full()) {
 		dataIn.read(currWord);
 		switch (cics_wordCount) {
 		case WORD_0:
@@ -327,7 +327,7 @@ void dropper(stream<axiWord>& dataIn, stream<bool>& validFifoIn, stream<axiWord>
 	bool d_valid;
 	axiWord currWord;
 
-	if (!dataIn.empty()) {
+	if (!dataIn.empty() && !dataOut.full()) {
 		if(d_isFirstWord) {
 			if (!validFifoIn.empty()) {
 				dataIn.read(currWord);
@@ -376,7 +376,7 @@ void dropper(stream<axiWord>& dataIn, stream<bool>& validFifoIn, stream<axiWord>
                 stream_empty[i] = inputStreams[i].empty();
           
             for (uint8_t i=0;i<2;++i) {
-                if(!stream_empty[i]) {
+                if(!stream_empty[i] && !outputStream.full()) {
                     streamSource = i;
                     inputWord = inputStreams[i].read();
                     outputStream.write(inputWord);
@@ -386,7 +386,7 @@ void dropper(stream<axiWord>& dataIn, stream<bool>& validFifoIn, stream<axiWord>
             }
             break;
         case 2:
-            if (!inputStreams[streamSource].empty() && !checksumStreams[streamSource].empty()) {
+            if (!inputStreams[streamSource].empty() && !checksumStreams[streamSource].empty() && !outputStream.full()) {
                 inputStreams[streamSource].read(inputWord);
 				icmpChecksum = checksumStreams[streamSource].read();
 				inputWord.data(63, 48) = icmpChecksum;
@@ -395,7 +395,7 @@ void dropper(stream<axiWord>& dataIn, stream<bool>& validFifoIn, stream<axiWord>
             }
             break;
 		default:
-			if (!inputStreams[streamSource].empty()) {
+			if (!inputStreams[streamSource].empty() && !outputStream.full()) {
 				inputStreams[streamSource].read(inputWord);
 				outputStream.write(inputWord);
 				if (inputWord.last == 1)

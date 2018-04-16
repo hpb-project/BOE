@@ -78,7 +78,7 @@ void state_table(	stream<stateQuery>&			rxEng2stateTable_upd_req,
 
 
 	// TX App If
-	if(!txApp2stateTable_upd_req.empty() && !stt_txWait)
+	if(!txApp2stateTable_upd_req.empty() && !stateTable2TxApp_upd_rsp.full() && !stt_txWait)
 	{
 		txApp2stateTable_upd_req.read(stt_txAccess);
 		if ((stt_txAccess.sessionID == stt_rxSessionID) && stt_rxSessionLocked) //delay
@@ -102,13 +102,13 @@ void state_table(	stream<stateQuery>&			rxEng2stateTable_upd_req,
 		}
 	}
 	// TX App Stream If
-	else if (!txApp2stateTable_req.empty())
+	else if (!txApp2stateTable_req.empty() && !stateTable2txApp_rsp.full() )
 	{
 		txApp2stateTable_req.read(sessionID);
 		stateTable2txApp_rsp.write(state_table[sessionID]);
 	}
 	// RX Engine
-	else if(!rxEng2stateTable_upd_req.empty() && !stt_rxWait)
+	else if(!rxEng2stateTable_upd_req.empty() && !stateTable2rxEng_upd_rsp.full() && !stateTable2sLookup_releaseSession.full() && !stt_rxWait)
 	{
 		rxEng2stateTable_upd_req.read(stt_rxAccess);
 		if ((stt_rxAccess.sessionID == stt_txSessionID) && stt_txSessionLocked)
@@ -135,7 +135,7 @@ void state_table(	stream<stateQuery>&			rxEng2stateTable_upd_req,
 		}
 	}
 	// Timer release
-	else if (!timer2stateTable_releaseState.empty() && !stt_closeWait) //can only be a close
+	else if (!timer2stateTable_releaseState.empty() && !stateTable2sLookup_releaseSession.full() && !stt_closeWait) //can only be a close
 	{
 		timer2stateTable_releaseState.read(stt_closeSessionID);
 		// Check if locked
@@ -149,7 +149,7 @@ void state_table(	stream<stateQuery>&			rxEng2stateTable_upd_req,
 			stateTable2sLookup_releaseSession.write(stt_closeSessionID);
 		}
 	}
-	else if (stt_txWait)
+	else if (stt_txWait && !stateTable2TxApp_upd_rsp.full())
 	{
 		if ((stt_txAccess.sessionID != stt_rxSessionID) || !stt_rxSessionLocked)
 		{
@@ -167,7 +167,7 @@ void state_table(	stream<stateQuery>&			rxEng2stateTable_upd_req,
 			stt_txWait = false;
 		}
 	}
-	else if (stt_rxWait)
+	else if (stt_rxWait && !stateTable2rxEng_upd_rsp.full() && !stateTable2sLookup_releaseSession.full())
 	{
 		if ((stt_rxAccess.sessionID != stt_txSessionID) || !stt_txSessionLocked)
 		{
@@ -189,7 +189,7 @@ void state_table(	stream<stateQuery>&			rxEng2stateTable_upd_req,
 			stt_rxWait = false;
 		}
 	}
-	else if (stt_closeWait)
+	else if (stt_closeWait && !stateTable2sLookup_releaseSession.full())
 	{
 		if (((stt_closeSessionID != stt_rxSessionID) || !stt_rxSessionLocked) && ((stt_closeSessionID != stt_txSessionID) || !stt_txSessionLocked))
 		{

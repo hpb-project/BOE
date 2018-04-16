@@ -58,7 +58,7 @@ void rxPath(stream<axiWord>&       lbRxDataIn,
 			}
 			break;
 		case LB_ACC_FIRST:
-			if (!lbRxDataIn.empty() && !lb_packetBuffer.full() && !lbRxMetadataIn.empty() && !lb_metadataBuffer.full()) {
+			if (!lbRxDataIn.empty() && !lb_packetBuffer.full() && !lbRxMetadataIn.empty() && !lb_metadataBuffer.full() && !lb_lengthBuffer.full()) {
 				metadata tempMetadata = lbRxMetadataIn.read();
 				sockaddr_in tempSocket = tempMetadata.sourceSocket ;
 				tempMetadata.sourceSocket = tempMetadata.destinationSocket;
@@ -107,7 +107,7 @@ void rxPath(stream<axiWord>&       lbRxDataIn,
 			}
 			break;
 		case LB_ACC:
-			if (!lbRxDataIn.empty() && !lb_packetBuffer.full()) {
+			if (!lbRxDataIn.empty() && !lb_packetBuffer.full() && !lb_lengthBuffer.full()) {
 				axiWord tempWord = lbRxDataIn.read();
 				lb_packetBuffer.write(tempWord);
 				ap_uint<4> counter = 0;

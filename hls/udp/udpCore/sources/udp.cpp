@@ -69,11 +69,11 @@ void portTable(stream<ap_uint<16> >&	rxEng2portTable_check_req,		// Input stream
 	#pragma HLS RESOURCE variable=portTable core=RAM_T2P_BRAM
 	#pragma HLS DEPENDENCE variable=portTable inter false
 
-	if (!rxEng2portTable_check_req.empty())	{					// This part handles querying the state of a port when a packet is received on the Rx side.
+	if (!rxEng2portTable_check_req.empty() && !portTable2rxEng_check_rsp.full())	{					// This part handles querying the state of a port when a packet is received on the Rx side.
 		ap_uint<16>	currPort = rxEng2portTable_check_req.read();
 		portTable2rxEng_check_rsp.write(portTable[currPort]);
 	}
-	else if (!app2portTable_port_req.empty()) {
+	else if (!app2portTable_port_req.empty() && !portTable2app_port_assign.full()) {
 		ap_uint<16> portToOpen	= app2portTable_port_req.read();
 		if (!portTable[portToOpen])
 			portTable2app_port_assign.write(true);
@@ -278,7 +278,7 @@ void stripIpHeader(stream<axiWord> &inputPathInData, stream<axiWord> &strip2inpu
 		}
 		break;
 	case STRIP_SKIPOPTIONS:
-		if (!inputPathInData.empty() && !strip2inputPath_IpHeader.full()  && !strip2inputPath_IP.full()) {
+		if (!inputPathInData.empty() && !strip2inputPath_IpHeader.full()  && !strip2inputPath_IP.full() && !strip2rxChecksum.full()) {
 			outputWord = inputPathInData.read();
 			if (ipHdrWordCount == 1) {
 				stripIpTuple.destinationIP = byteSwap32(outputWord.data.range(31, 0));
@@ -299,7 +299,7 @@ void stripIpHeader(stream<axiWord> &inputPathInData, stream<axiWord> &strip2inpu
 		}
 		break;
 	case STRIP_IP2:
-		if (!inputPathInData.empty() && !strip2rxChecksum.full() && !strip2inputPath_IP.full()) {
+		if (!inputPathInData.empty() && !strip2rxChecksum.full() && !strip2inputPath_IP.full() && !strip2inputPath_IpHeader.full()) {
 			outputWord = inputPathInData.read();
 			if (ipHdrWordCount == 1) {
 				stripIpTuple.destinationIP = byteSwap32(outputWord.data.range(31, 0));
@@ -422,7 +422,7 @@ void rxEngineUdpChecksumVerification(stream<axiWord>	&dataIn,
 	static ap_uint<16>	receivedChecksum	= 0;
 	static ap_uint<10>	wordCounter			= 0;
 
-	if (!dataIn.empty()) {
+	if (!dataIn.empty() && !udpChecksumOut.full()) {
 		wordCounter++;
 		axiWord inputWord = dataIn.read();
 		if(wordCounter == 3)
@@ -476,7 +476,7 @@ void outputPathWriteFunction(stream<axiWord> &outputPathInData, stream<metadata>
 
 	switch(outputPathWriteFunctionState) {
 		case OW_IDLE:
-			if (!outputPathInMetadata.empty() && !outputPathWriteFunction2checksumCalculation.full()) {
+			if (!outputPathInMetadata.empty() && !outputPathWriteFunction2checksumCalculation.full() && !udpMetadata.full()) {
 				tempMetadata = outputPathInMetadata.read();		// Read in the metadata
 				udpMetadata.write(tempMetadata);				// Write the metadata in the buffer for the next stage
 				ioWord checksumOutput = {0, 0};					// Temporary variable for the checksum calculation data word
@@ -486,7 +486,7 @@ void outputPathWriteFunction(stream<axiWord> &outputPathInData, stream<metadata>
 			}
 			break;
 		case OW_PSEUDOHEADER:
-			if (!outputpathInLength.empty() && !outputPathWriteFunction2checksumCalculation.full()) {
+			if (!outputpathInLength.empty() && !outputPathWriteFunction2checksumCalculation.full() && !packetLength.full()) {
 				outputPathPacketLength = outputpathInLength.read();		// Read in the payload length
 				outputPathPacketLength += 8;							// Increase the length to take the UDP header into account.
 				packetLength.write(outputPathPacketLength);				// Write length into the buffer for the next stage
@@ -498,7 +498,7 @@ void outputPathWriteFunction(stream<axiWord> &outputPathInData, stream<metadata>
 			}
 			break;
 		case OW_MIX:
-			if (!outputPathInData.empty() && !outputPathWriteFunction2checksumCalculation.full()) {
+			if (!outputPathInData.empty() && !outputPathWriteFunction2checksumCalculation.full() && !packetData.full()) {
 				outputPathInputWord					= outputPathInData.read();	// Read in the first payload length
 				ioWord checksumOutput				= {0, 0};					// First payload length
 				checksumOutput.data.range(15, 0) 	= (outputPathPacketLength.range(7, 0), outputPathPacketLength.range(15, 8)); 	// Packet length for the checksum calculation data
@@ -568,7 +568,7 @@ void udpChecksumCalculation(stream<ioWord>&	dataIn,
 
 	static ap_uint<32> 	udpChecksum 	= 0;
 
-	if (!dataIn.empty()) {
+	if (!dataIn.empty() && !udpChecksumOut.full()) {
 		ioWord inputWord = dataIn.read();
 		udpChecksum = ((((udpChecksum + inputWord.data.range(63, 48)) + inputWord.data.range(47, 32)) + inputWord.data.range(31, 16)) + inputWord.data.range(15, 0));
 		if (inputWord.eop) {
@@ -593,7 +593,8 @@ void outputPathReadFunction(stream<ap_uint<64> > &packetData, stream<ap_uint<16>
 
 	switch(outputPathReadFunctionState) {
 		case OR_IDLE:
-			if (!packetLength.empty() && !udpMetadata.empty() && !udpChecksum.empty() ) {
+			if (!packetLength.empty() && !udpMetadata.empty() && !udpChecksum.empty()
+					&& !outputPathReadFunction2addIpHeader_length.full() && !outputPathOutData.full() && !outIPaddresses.full() ) {
 				//std::cerr << myPacketCounter << std::endl;
 				myPacketCounter++;
 
@@ -615,7 +616,7 @@ void outputPathReadFunction(stream<ap_uint<64> > &packetData, stream<ap_uint<16>
 			}
 			break;
 		case OR_STREAM:
-			if (!packetData.empty()) {
+			if (!packetData.empty() && outputPathOutData.full()) {
 				ap_uint<64> inputWord = packetData.read();
 				axiWord outputWord = axiWord(inputWord, 0xFF, 0);
 				//std::cerr << std::hex << outputWord.data << std::endl;

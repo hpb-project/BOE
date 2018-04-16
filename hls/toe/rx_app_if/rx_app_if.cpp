@@ -63,7 +63,7 @@ void rx_app_if(	stream<ap_uint<16> >&				appListenPortReq,
 
 	// TODO maybe do a state machine
 	// Listening Port Open, why not asynchron??
-	if (!appListenPortReq.empty() && !rai_wait)
+	if (!appListenPortReq.empty() && !rxApp2portTable_listen_req.full() && !rai_wait)
 	{
 		//appListenPortReq.read(tempPort);
 		//listenPort(7, 0) = tempPort(15, 8);
@@ -71,7 +71,7 @@ void rx_app_if(	stream<ap_uint<16> >&				appListenPortReq,
 		rxApp2portTable_listen_req.write(appListenPortReq.read());
 		rai_wait = true;
 	}
-	else if (!portTable2rxApp_listen_rsp.empty() && rai_wait)
+	else if (!portTable2rxApp_listen_rsp.empty() && !appListenPortRsp.full() && rai_wait)
 	{
 		portTable2rxApp_listen_rsp.read(listening);
 		appListenPortRsp.write(listening);

@@ -312,7 +312,7 @@ void iph_check_ip_checksum(	stream<subSums>&		iph_subSumsFifoOut,
 #pragma HlS INLINE off
 #pragma HLS PIPELINE II=1 enable_flush
 
-	if (!iph_subSumsFifoOut.empty()) {
+	if (!iph_subSumsFifoOut.empty() && !iph_validFifoOut.full()) {
 		subSums icic_ip_sums = iph_subSumsFifoOut.read();
 		icic_ip_sums.sum0 += icic_ip_sums.sum2;
 		icic_ip_sums.sum1 += icic_ip_sums.sum3;

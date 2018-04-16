@@ -58,7 +58,7 @@ void rxTcpLengthExtract(stream<axiWord>&			dataIn,
 	axiWord currWord;
 	axiWord sendWord;
 
-	if (tle_insertWord)
+	if (tle_insertWord && !dataOut.full())
 	{
 		sendWord.data = 0;
 		sendWord.keep = 0xFF;
@@ -67,7 +67,7 @@ void rxTcpLengthExtract(stream<axiWord>&			dataIn,
 		//printWord(sendWord);
 		tle_insertWord = false;
 	}
-	else if (!dataIn.empty() && !tle_wasLast)
+	else if (!dataIn.empty() && !tle_wasLast && !tcpLenFifoOut.full() && !dataOut.full() )
 	{
 		dataIn.read(currWord);
 		switch (tle_wordCount)
@@ -156,7 +156,7 @@ void rxTcpLengthExtract(stream<axiWord>&			dataIn,
 			tle_wasLast = !sendWord.last;
 		}
 	} // if !empty
-	else if (tle_wasLast) //Assumption has to be shift
+	else if (tle_wasLast && !dataOut.full()) //Assumption has to be shift
 	{
 		// Send remainng data
 		sendWord.data(31, 0) = tle_prevWord.data(63, 32);
@@ -191,7 +191,7 @@ void rxInsertPseudoHeader(stream<axiWord>&				dataIn,
 
 
 	currWord.last = 0;
-	if (iph_wasLast)
+	if (iph_wasLast && !dataOut.full())
 	{
 		sendWord.data(31,0) = iph_prevWord.data(63,32);
 		sendWord.keep(3, 0) = iph_prevWord.keep(7,4);
@@ -200,7 +200,7 @@ void rxInsertPseudoHeader(stream<axiWord>&				dataIn,
 		dataOut.write(sendWord);
 		iph_wasLast = false;
 	}
-	else if(!dataIn.empty())
+	else if(!dataIn.empty() && !dataOut.full())
 	{
 		switch (iph_wordCount)
 		{
@@ -287,7 +287,7 @@ void rxCheckTCPchecksum(stream<axiWord>&					dataIn,
 	static ap_uint<3> csa_cc_state = 0;
 
 	//currWord.last = 0; //mighnt no be necessary any more FIXME to you want to risk it ;)
-	if (!dataIn.empty() && !csa_checkChecksum)
+	if (!dataIn.empty() && !dataOut.full() && !csa_checkChecksum )
 	{
 		dataIn.read(currWord);
 		switch (csa_wordCount)
@@ -416,7 +416,7 @@ void rxCheckTCPchecksum(stream<axiWord>&					dataIn,
 		csa_wordCount = 0;
 		csa_checkChecksum = true;
 	}*/
-	else if(csa_wasLast) //make if
+	else if(csa_wasLast && !dataOut.full()) //make if
 	{
 		if (csa_meta.length != 0)
 		{
@@ -429,7 +429,7 @@ void rxCheckTCPchecksum(stream<axiWord>&					dataIn,
 		}
 		csa_wasLast = false;
 	}
-	else if (csa_checkChecksum) //make if?
+	else if (csa_checkChecksum && !metaDataFifoOut.full() && !portTableOut.full() && !tupleFifoOut.full() && !validFifoOut.full() ) //make if?
 	{
 		switch (csa_cc_state)
 		{
@@ -600,7 +600,8 @@ void rxMetadataHandler(	stream<rxEngineMetaData>&				metaDataFifoIn,
 	switch (mh_state)
 	{
 	case META:
-		if (!metaDataFifoIn.empty() && !portTable2rxEng_rsp.empty() && !tupleBufferIn.empty())
+		if (!metaDataFifoIn.empty() && !portTable2rxEng_rsp.empty() && !tupleBufferIn.empty()
+			&& !rxEng2eventEng_setEvent.full() && !dropDataFifoOut.full() && !rxEng2sLookup_req.full())
 		{
 			metaDataFifoIn.read(mh_meta);
 			portTable2rxEng_rsp.read(portIsOpen);
@@ -647,7 +648,7 @@ void rxMetadataHandler(	stream<rxEngineMetaData>&				metaDataFifoIn,
 		}
 		break;
 	case LOOKUP: //BIG delay here, waiting for LOOKup
-		if (!sLookup2rxEng_rsp.empty())
+		if (!sLookup2rxEng_rsp.empty() && !fsmMetaDataFifo.full() && !dropDataFifoOut.full())
 		{
 			sLookup2rxEng_rsp.read(mh_lup);
 			if (mh_lup.hit)
@@ -734,7 +735,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 	switch(fsm_state)
 	{
 	case LOAD:
-		if (!fsmMetaDataFifo.empty())
+		if (!fsmMetaDataFifo.empty() && !rxEng2stateTable_upd_req.full() && !rxEng2rxSar_upd_req.full() && !rxEng2txSar_upd_req.full())
 		{
 			fsmMetaDataFifo.read(fsm_meta);
 			// read state
@@ -753,7 +754,12 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 	case TRANSITION:
 		// Check if transition to LOAD occurs
 		if (!stateTable2rxEng_upd_rsp.empty() && !rxSar2rxEng_upd_rsp.empty()
-						&& !(fsm_txSarRequest && txSar2rxEng_upd_rsp.empty()))
+				&& !(fsm_txSarRequest && txSar2rxEng_upd_rsp.empty())
+				&& !rxEng2stateTable_upd_req.full() && !rxEng2rxSar_upd_req.full() && !rxEng2txSar_upd_req.full()
+				&& !rxEng2timer_clearRetransmitTimer.full() && !rxEng2timer_clearProbeTimer.full() && !rxEng2timer_setCloseTimer.full()
+				&& !rxBufferWriteCmd.full() && !rxEng2rxApp_notification.full()
+				&& !dropDataFifoOut.full() && !rxEng2eventEng_setEvent.full()
+				&& !openConStatusOut.full())
 		{
 			fsm_state = LOAD;
 			fsm_txSarRequest = false;
@@ -1209,7 +1215,7 @@ void rxAppNotificationDelayer(	stream<mmStatus>&				rxWriteStatusIn, stream<appN
 	static appNotification	rxAppNotification;
 
 	if (rxAppNotificationDoubleAccessFlag == true) {
-		if(!rxWriteStatusIn.empty()) {
+		if(!rxWriteStatusIn.empty()  && !notificationOut.full() ) {
 			rxWriteStatusIn.read(rxAppNotificationStatus2);
 			rand_fifoCount--;
 			if (rxAppNotificationStatus1.okay && rxAppNotificationStatus2.okay)
@@ -1218,7 +1224,7 @@ void rxAppNotificationDelayer(	stream<mmStatus>&				rxWriteStatusIn, stream<appN
 		}
 	}
 	else if (rxAppNotificationDoubleAccessFlag == false) {
-		if(!rxWriteStatusIn.empty() && !rand_notificationBuffer.empty() && !doubleAccess.empty()) {
+		if(!rxWriteStatusIn.empty() && !rand_notificationBuffer.empty() && !doubleAccess.empty()  && !notificationOut.full() ) {
 			rxWriteStatusIn.read(rxAppNotificationStatus1);
 			rand_notificationBuffer.read(rxAppNotification);
 			rxAppNotificationDoubleAccessFlag = doubleAccess.read(); 	// Read the double notification flag. If one then go and w8 for the second status
@@ -1229,7 +1235,7 @@ void rxAppNotificationDelayer(	stream<mmStatus>&				rxWriteStatusIn, stream<appN
 			}
 			//TODO else, we are screwed since the ACK is already sent
 		}
-		else if (!internalNotificationFifoIn.empty() && (rand_fifoCount < 31)) {
+		else if (!internalNotificationFifoIn.empty() && (rand_fifoCount < 31)  && !rand_notificationBuffer.full() && !notificationOut.full() ) {
 			internalNotificationFifoIn.read(rxAppNotification);
 			if (rxAppNotification.length != 0) {
 				rand_notificationBuffer.write(rxAppNotification);
@@ -1246,11 +1252,11 @@ void rxEventMerger(stream<extendedEvent>& in1, stream<event>& in2, stream<extend
 	#pragma HLS PIPELINE II=1
 	#pragma HLS INLINE
 
-	if (!in1.empty())
+	if (!in1.empty() && !out.full() )
 	{
 		out.write(in1.read());
 	}
-	else if (!in2.empty())
+	else if (!in2.empty() && !out.full() )
 	{
 		out.write(in2.read());
 	}

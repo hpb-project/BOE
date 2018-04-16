@@ -60,13 +60,13 @@ void rx_sar_table(	stream<rxSarRecvd>&			rxEng2rxSar_upd_req,
 #pragma HLS DEPENDENCE variable=rx_table inter false
 
 	// Read only access from the Tx Engine
-	if(!txEng2rxSar_req.empty())
+	if(!txEng2rxSar_req.empty() && !rxSar2txEng_rsp.full())
 	{
 		txEng2rxSar_req.read(addr);
 		rxSar2txEng_rsp.write(rx_table[addr]);
 	}
 	// Read or Write access from the Rx App I/F to update the application pointer
-	else if(!rxApp2rxSar_upd_req.empty())
+	else if(!rxApp2rxSar_upd_req.empty() && !rxSar2rxApp_upd_rsp.full())
 	{
 		rxApp2rxSar_upd_req.read(in_appd);
 		if(in_appd.write)
@@ -79,7 +79,7 @@ void rx_sar_table(	stream<rxSarRecvd>&			rxEng2rxSar_upd_req,
 		}
 	}
 	// Read or Write access from the Rx Engine
-	else if(!rxEng2rxSar_upd_req.empty())
+	else if(!rxEng2rxSar_upd_req.empty() && !rxSar2rxEng_upd_rsp.full())
 	{
 		rxEng2rxSar_upd_req.read(in_recvd);
 		if (in_recvd.write)

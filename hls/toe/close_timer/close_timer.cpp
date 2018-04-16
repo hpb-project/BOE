@@ -81,7 +81,7 @@ void close_timer(	stream<ap_uint<16> >&		rxEng2timer_setCloseTimer,
 			{
 				closeTimerTable[ct_currSessionID].time -= 1;
 			}
-			else
+			else if(!closeTimer2stateTable_releaseState.full())
 			{
 				closeTimerTable[ct_currSessionID].time = 0;
 				closeTimerTable[ct_currSessionID].active = false;
