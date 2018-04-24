@@ -84,7 +84,7 @@ void probe_timer(	stream<ap_uint<16> >&		rxEng2timer_clearProbeTimer,
 		if (!rxEng2timer_clearProbeTimer.empty())
 		{
 			rxEng2timer_clearProbeTimer.read(checkID);
-			fastResume = true;
+			//fastResume = true;
 		}
 		else
 		{
